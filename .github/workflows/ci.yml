@@ -75,10 +75,7 @@ jobs:
           node-version: '${{ env.NODE_VERSION }}'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      # Red TDD tests for adapter-* and policy stay red until issues #5/#6/#7/#8 land.
-      # TODO(#8): remove continue-on-error when the last adapter implementation merges.
       - run: pnpm exec nx run-many --target=test --exclude=core --parallel=3
-        continue-on-error: true
 
   build:
     runs-on: ubuntu-latest

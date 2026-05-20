@@ -73,6 +73,40 @@ doesn't expose Jest's globals via `@types/jest`.
 
 `presets.test.ts` stays red until issue #7 implements the five preset factories.
 
+## Presets (closes #7)
+
+The five blessed presets in `src/presets.ts` are pure config factories — no
+HTTP, no side effects. Each returns a partial `OpenAICompatibleAdapterConfig`
+sans `apiKey`; the caller supplies that at invocation time:
+
+```ts
+import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+import { presets } from '@tierfall/adapter-openai-compatible/presets';
+
+const adapter = new OpenAICompatibleAdapter(
+  presets.deepseek({
+    apiKey: process.env.DEEPSEEK_API_KEY!,
+  }),
+);
+```
+
+**Override semantics:** top-level fields use shallow merge (override wins);
+`capability` deep-merges one level so the user can replace a single capability
+field without losing the preset's defaults for the others.
+
+**Pricing values** in the presets are best-effort representative figures from
+the implementation date. Each preset's TSDoc cites the provider's pricing-page
+URL so future contributors know where to verify. When a vendor changes their
+rate card, a preset-refresh PR updates the relevant values.
+
+**Adding a new preset** requires:
+
+1. Add a new field to `OpenAICompatiblePresets` interface in `src/presets.ts`
+2. Add a new factory under `presets`
+3. Add a per-preset test in `test/presets.test.ts` (shape + tier)
+4. Update the `Object.keys(presets)` test to include the new name
+5. Cite the pricing-source URL in the preset's TSDoc
+
 ## When changing this package
 
 Run `pnpm --filter @tierfall/adapter-openai-compatible test`. The 10 adapter
