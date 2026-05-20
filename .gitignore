@@ -9,3 +9,13 @@ coverage/
 .env
 .env.local
 .DS_Store
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Jest
+.jest-cache/
+
+# Generated
+*.tgz
