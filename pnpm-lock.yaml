@@ -199,6 +199,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@jest/globals':
+        specifier: 29.7.0
+        version: 29.7.0
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@25.9.1)
