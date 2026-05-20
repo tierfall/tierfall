@@ -19,3 +19,6 @@ coverage/
 
 # Generated
 *.tgz
+
+# Fumadocs (generated content/page index)
+apps/docs/.source/

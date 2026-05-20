@@ -1,0 +1,22 @@
+---
+title: TierFall
+description: Local-first AI routing for TypeScript. Fall, never climb.
+---
+
+TierFall routes AI calls between four tiers — on-device, self-hosted edge, cheap cloud,
+premium cloud — based on declarative policy. On failure, capability mismatch, or budget
+breach, the router falls to a **cheaper** tier. It never climbs.
+
+## Status
+
+This is the v0.1 scaffold. Adapter implementations and full router logic land
+via the v0.1 backlog issues; see the [project board](https://github.com/orgs/tierfall/projects).
+
+## The four tiers
+
+- **on-device** — runs in-process or on localhost (Ollama, llama.cpp)
+- **self-hosted edge** — your own infrastructure (vLLM, LM Studio)
+- **cheap cloud** — fast inference at low cost (Groq, DeepSeek, Cerebras)
+- **premium cloud** — frontier models (Anthropic, OpenAI)
+
+Full concept docs: see issue #10.

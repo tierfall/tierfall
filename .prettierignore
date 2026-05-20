@@ -7,4 +7,5 @@ coverage
 pnpm-lock.yaml
 *.tsbuildinfo
 apps/docs/.source
+apps/docs/next-env.d.ts
 CHANGELOG.md

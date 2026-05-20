@@ -1,0 +1,29 @@
+{
+  "name": "@tierfall-app/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "fumadocs-mdx && next build",
+    "dev": "fumadocs-mdx && next dev",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx",
+    "lint": "eslint --max-warnings=0 --quiet app lib",
+    "typecheck": "fumadocs-mdx && tsc --noEmit --pretty false"
+  },
+  "dependencies": {
+    "fumadocs-core": "16.8.12",
+    "fumadocs-ui": "16.8.12",
+    "fumadocs-mdx": "15.0.7",
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@types/mdx": "2.0.13",
+    "@types/node": "25.9.1",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "typescript": "6.0.3"
+  }
+}
