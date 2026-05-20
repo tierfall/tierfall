@@ -1,0 +1,8 @@
+# Default reviewer: maintainers team
+* @tierfall/maintainers
+
+# Critical paths: same team, explicit so review can't be bypassed by re-assignment
+/packages/core/ @tierfall/maintainers
+/eslint.config.mjs @tierfall/maintainers
+/tsconfig.base.json @tierfall/maintainers
+/.github/workflows/release.yml @tierfall/maintainers

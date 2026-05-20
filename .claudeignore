@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.nx/cache
+.nx/workspace-data
+.next
+.turbo
+*.log
+**/*.tsbuildinfo
+apps/docs/.source
+pnpm-lock.yaml

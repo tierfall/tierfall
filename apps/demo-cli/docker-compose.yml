@@ -1,0 +1,58 @@
+name: tierfall-demo
+
+services:
+  ollama:
+    image: ollama/ollama:0.24.0
+    container_name: tierfall-ollama
+    ports:
+      # Host 11434 is commonly occupied by a local Ollama install; remap to 11435.
+      # Services inside this Compose network still reach Ollama at http://ollama:11434.
+      - '11435:11434'
+    volumes:
+      - ollama-models:/root/.ollama
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  ollama-init:
+    image: ollama/ollama:0.24.0
+    container_name: tierfall-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command: -c "OLLAMA_HOST=http://ollama:11434 ollama pull llama3.2:3b"
+    restart: 'no'
+
+  demo:
+    build:
+      context: ../..
+      dockerfile: apps/demo-cli/Dockerfile
+    container_name: tierfall-demo
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+
+  demo-cloud-only:
+    profiles: ['cloud']
+    build:
+      context: ../..
+      dockerfile: apps/demo-cli/Dockerfile
+    container_name: tierfall-demo-cloud
+    environment:
+      OLLAMA_BASE_URL: ''
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+
+volumes:
+  ollama-models:

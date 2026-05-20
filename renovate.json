@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", "schedule:weekly"],
+  "labels": ["type:chore", "area:ci"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "matchPackagePatterns": ["^@tierfall/"],
+      "enabled": false
+    }
+  ],
+  "vulnerabilityAlerts": { "enabled": true, "labels": ["type:security"] },
+  "lockFileMaintenance": { "enabled": true, "schedule": ["before 5am on Monday"] }
+}

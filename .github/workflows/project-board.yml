@@ -1,0 +1,31 @@
+name: Project Board
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, closed]
+
+jobs:
+  move-card:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move card on PR open
+        if: github.event.action == 'opened' || github.event.action == 'ready_for_review' || github.event.action == 'reopened'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_BOARD_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          ISSUE_NUM=$(echo "$PR_BODY" | grep -oE '[Cc]loses #[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+          if [ -z "$ISSUE_NUM" ]; then echo "No linked issue; skipping board move."; exit 0; fi
+          # TODO(#16): replace this echo stub with real ProjectV2 GraphQL mutation.
+          echo "Would move issue #$ISSUE_NUM to In Review"
+
+      - name: Move card on PR merge
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_BOARD_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          ISSUE_NUM=$(echo "$PR_BODY" | grep -oE '[Cc]loses #[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+          if [ -z "$ISSUE_NUM" ]; then echo "No linked issue; skipping board move."; exit 0; fi
+          # TODO(#16): replace this echo stub with real ProjectV2 GraphQL mutation.
+          echo "Would move issue #$ISSUE_NUM to Done"

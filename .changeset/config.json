@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "tierfall/tierfall" }],
+  "commit": false,
+  "fixed": [],
+  "linked": [
+    [
+      "@tierfall/core",
+      "@tierfall/adapter-ollama",
+      "@tierfall/adapter-openai-compatible",
+      "@tierfall/adapter-anthropic"
+    ]
+  ],
+  "access": "public",
+  "baseBranch": "develop",
+  "updateInternalDependencies": "patch",
+  "ignore": ["@tierfall-app/demo-cli", "@tierfall-app/docs"]
+}
