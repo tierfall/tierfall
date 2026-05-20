@@ -32,9 +32,10 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --testPathIgnorePatterns=integration",
     "lint": "eslint --max-warnings=0 --quiet src test",
-    "typecheck": "tsc --noEmit --pretty false"
+    "typecheck": "tsc --noEmit --pretty false",
+    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --testPathPattern=integration"
   },
   "dependencies": {
     "@tierfall/core": "workspace:*"
