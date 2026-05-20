@@ -4,6 +4,7 @@
     { "path": "./packages/core" },
     { "path": "./packages/adapter-ollama" },
     { "path": "./packages/adapter-openai-compatible" },
-    { "path": "./packages/adapter-anthropic" }
+    { "path": "./packages/adapter-anthropic" },
+    { "path": "./apps/demo-cli" }
   ]
 }

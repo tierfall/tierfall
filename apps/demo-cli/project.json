@@ -1,0 +1,11 @@
+{
+  "name": "demo-cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/demo-cli/src",
+  "targets": {
+    "build": { "executor": "nx:run-script", "options": { "script": "build" } },
+    "lint": { "executor": "nx:run-script", "options": { "script": "lint" } },
+    "typecheck": { "executor": "nx:run-script", "options": { "script": "typecheck" } }
+  }
+}

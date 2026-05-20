@@ -75,4 +75,13 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
     },
   },
+
+  // The demo CLI logs to console by design - that IS its purpose.
+  // Other packages remain bound by the default no-console behavior.
+  {
+    files: ['apps/demo-cli/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );
