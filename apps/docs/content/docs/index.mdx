@@ -3,20 +3,51 @@ title: TierFall
 description: Local-first AI routing for TypeScript. Fall, never climb.
 ---
 
-TierFall routes AI calls between four tiers — on-device, self-hosted edge, cheap cloud,
-premium cloud — based on declarative policy. On failure, capability mismatch, or budget
-breach, the router falls to a **cheaper** tier. It never climbs.
+TierFall routes AI requests across four tiers — on-device, self-hosted edge, cheap cloud, premium cloud — based on declarative policy. When a tier fails, is unreachable, or exceeds budget, the router **falls** to a cheaper tier. It never climbs toward more expensive ones without explicit opt-in.
+
+The design sits underneath frameworks like the Vercel AI SDK rather than replacing them.
 
 ## Status
 
-This is the v0.1 scaffold. Adapter implementations and full router logic land
-via the v0.1 backlog issues; see the [project board](https://github.com/orgs/tierfall/projects).
+This is **v0.1**. What works today:
 
-## The four tiers
+- `@tierfall/core` — Router, `DefaultPolicy`, error taxonomy, fall diagnostics
+- `@tierfall/adapter-ollama` — on-device tier against a local Ollama daemon
+- `@tierfall/adapter-openai-compatible` — five blessed presets (Groq, DeepSeek, OpenAI, Cerebras, OpenRouter) plus bring-your-own
+- `@tierfall/adapter-anthropic` — premium tier against Claude's Messages API
+- A containerized demo that runs four end-to-end scenarios
 
-- **on-device** — runs in-process or on localhost (Ollama, llama.cpp)
-- **self-hosted edge** — your own infrastructure (vLLM, LM Studio)
-- **cheap cloud** — fast inference at low cost (Groq, DeepSeek, Cerebras)
-- **premium cloud** — frontier models (Anthropic, OpenAI)
+Coming in subsequent versions: browser runtime (v0.2), React Native (v0.3), tool calling + streaming + structured output (v0.4), caching (v0.5), Vercel AI SDK compatibility shim (v1.0).
 
-Full concept docs: see issue #10.
+## Install
+
+```bash
+pnpm add @tierfall/core @tierfall/adapter-ollama @tierfall/adapter-openai-compatible @tierfall/adapter-anthropic
+```
+
+You only need the adapters you'll actually use. The core package alone is enough to author your own.
+
+## A first request
+
+```ts
+import { Router } from '@tierfall/core';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const router = new Router([new OllamaAdapter({ model: 'llama3.2:3b' })]);
+
+const response = await router.complete({
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+
+console.log(response.text);
+console.log('Served by tier:', response.tier);
+```
+
+That's the whole shape. Real usage adds a `DefaultPolicy` to filter and sort the adapters; cloud adapters take `apiKey` config; and `response.fallChain` carries diagnostics when the router had to fall through tiers.
+
+## Read next
+
+- [Getting started](/docs/getting-started) — full local install and demo run
+- [The four tiers](/docs/concepts/tiers) — what the words mean
+- [Fall, never climb](/docs/concepts/fall-never-climb) — the routing thesis
