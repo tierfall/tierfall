@@ -9,4 +9,5 @@ export {
   CapabilityMismatchError,
   ProviderUnavailableError,
   NoTierAvailableError,
+  formatFallChain,
 } from './errors.js';
