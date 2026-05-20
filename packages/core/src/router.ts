@@ -52,6 +52,47 @@ function detailOf(err: unknown): string {
  * The router OVERRIDES `LLMResponse.tier` and `LLMResponse.fallChain` so that
  * the returned values reflect the router's view of the world — the adapter
  * that actually served the request, and the chain of attempts it made.
+ *
+ * @example
+ * Basic three-tier setup (premium → cheap → local):
+ * ```ts
+ * import { Router } from '@tierfall/core';
+ * import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+ * import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+ * import { OllamaAdapter } from '@tierfall/adapter-ollama';
+ *
+ * const router = new Router([
+ *   new AnthropicAdapter({ apiKey: process.env.ANTHROPIC_API_KEY!, model: 'claude-sonnet-4-7' }),
+ *   new OpenAICompatibleAdapter({ baseUrl: 'https://api.deepseek.com', apiKey: process.env.DEEPSEEK_API_KEY!, model: 'deepseek-chat' }),
+ *   new OllamaAdapter({ baseUrl: 'http://localhost:11434', model: 'llama3.2:3b' }),
+ * ]);
+ *
+ * const response = await router.complete({
+ *   model: 'auto',
+ *   messages: [{ role: 'user', content: 'Hello!' }],
+ * });
+ *
+ * console.log(response.text);             // adapter-produced content
+ * console.log(response.tier);             // tier of the adapter that served
+ * console.log(response.fallChain.length); // 0 if first adapter succeeded
+ * ```
+ *
+ * @example
+ * Inspecting a fall chain after a failure cascade:
+ * ```ts
+ * try {
+ *   const response = await router.complete(request);
+ *   for (const fall of response.fallChain) {
+ *     console.warn(`fell from ${fall.tier} (${fall.adapterName}): ${fall.reason} — ${fall.detail}`);
+ *   }
+ * } catch (err) {
+ *   if (err instanceof NoTierAvailableError) {
+ *     console.error('All adapters failed:', err.fallChain);
+ *   } else {
+ *     throw err;
+ *   }
+ * }
+ * ```
  */
 export class Router {
   readonly adapters: readonly Adapter[];
