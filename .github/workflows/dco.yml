@@ -1,0 +1,21 @@
+name: DCO
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Verify DCO sign-off on all commits
+        run: |
+          MERGE_BASE=$(git merge-base origin/${{ github.base_ref }} HEAD)
+          COMMITS_WITHOUT_SIGNOFF=$(git log --format='%H %s' "$MERGE_BASE..HEAD" --invert-grep --grep='^Signed-off-by:' || true)
+          if [ -n "$COMMITS_WITHOUT_SIGNOFF" ]; then
+            echo "::error::The following commits are missing Signed-off-by:"
+            echo "$COMMITS_WITHOUT_SIGNOFF"
+            exit 1
+          fi

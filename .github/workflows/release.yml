@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+env:
+  NODE_VERSION: '24.15.0'
+  PNPM_VERSION: '10.33.0'
+
+jobs:
+  verify-origin:
+    # Sanity guard: this workflow runs on push-to-main. Ensure the merge commit
+    # came from a develop -> main PR. If anyone manually pushed to main
+    # (which branch protection should prevent), abort.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 5 }
+      - name: Verify previous PR head was develop
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MERGED_PR=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" --jq '.[0]')
+          HEAD_REF=$(echo "$MERGED_PR" | jq -r .head.ref)
+          if [ "$HEAD_REF" != "develop" ]; then
+            echo "::error::Release workflow expects merges from develop only, got: $HEAD_REF"
+            exit 1
+          fi
+
+  release:
+    needs: verify-origin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama,adapter-openai-compatible,adapter-anthropic
+      - id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm run changeset:publish
+          version: pnpm run changeset:version
+          commit: 'chore(release): version packages'
+          title: 'chore(release): version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
