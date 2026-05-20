@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    "packages/*": {
+      "entry": ["src/index.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "packages/adapter-openai-compatible": {
+      "entry": ["src/index.ts!", "src/presets/index.ts!"],
+      "project": ["src/**/*.ts!", "test/**/*.ts"]
+    },
+    "apps/demo-cli": {
+      "entry": ["src/main.ts!"],
+      "project": ["src/**/*.ts!"]
+    },
+    "apps/docs": {
+      "entry": ["app/**/*.tsx!", "lib/**/*.ts!", "source.config.ts"],
+      "project": ["**/*.{ts,tsx,mdx}!"]
+    }
+  },
+  "ignore": ["**/dist/**", "**/.next/**", "**/coverage/**"]
+}

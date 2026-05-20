@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "worktree": { "bgIsolation": "none" },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "command": "bash -c 'b=$(git -C \"${CLAUDE_PROJECT_DIR:-.}\" branch --show-current 2>/dev/null || echo unknown); p=$(pwd | sed \"s|.*tierfall/||\"); echo \"[branch: $b | path: $p]\"'"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(git:status)",
+      "Bash(git:diff)",
+      "Bash(git:log:*)",
+      "Bash(nx:*)",
+      "Bash(gh:issue:*)",
+      "Bash(gh:pr:*)",
+      "Bash(gh:label:*)"
+    ]
+  }
+}
