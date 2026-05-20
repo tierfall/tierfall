@@ -1,43 +1,41 @@
 # @tierfall-app/demo-cli
 
-> End-to-end TierFall demo. Boots Ollama, pulls a small model, runs the demo
-> container against it.
+Containerized end-to-end demo of TierFall's fall-never-climb routing.
 
-## Quickstart
-
-From the repo root:
+## Run via Docker Compose (recommended)
 
 ```bash
 docker compose -f apps/demo-cli/docker-compose.yml up --abort-on-container-exit demo
 ```
 
-This will:
+First run pulls `llama3.2:3b` (~2GB) and may take 10–20 minutes. Subsequent runs reuse the cached model volume and complete in ~30 seconds.
 
-1. Start the `ollama` service (host port `11435` published; service-internal
-   port stays `11434`).
-2. Run `ollama-init`, which pulls `llama3.2:3b` (~2 GB on first run; cached in
-   the `ollama-models` named volume on subsequent runs).
-3. Build and run the demo container, which logs the adapters detected from
-   environment and exits 0.
+Optional environment variables (pass via `.env` at repo root):
 
-Tear down without losing the model cache:
+| Env                 | Effect                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | Enables premium-cloud tier via `@tierfall/adapter-anthropic` (Claude Sonnet 4.7). Takes precedence over `OPENAI_API_KEY`. |
+| `OPENAI_API_KEY`    | Enables premium-cloud tier via the `openai` preset, but only if `ANTHROPIC_API_KEY` is unset.                             |
+| `DEEPSEEK_API_KEY`  | Enables cheap-cloud tier via the `deepseek` preset.                                                                       |
+| `OLLAMA_BASE_URL`   | Override Ollama URL (default: `http://localhost:11434`; inside Compose: `http://ollama:11434`).                           |
+
+Missing keys log a skip line; the demo runs with whatever's available. Ollama is always-on (Compose provides it).
+
+## What the four scenarios show
+
+1. **Basic chat** — request flows to the highest-priority tier and returns. `fallChain` is empty.
+2. **Budget filter (silent)** — request includes `maxCostUSD: 0.0001`. The _policy_ filters premium and cheap out at pre-flight; the _router_ never sees them. `fallChain` is empty even though tiers were excluded — because a filter is silent, not a fall.
+3. **Capability mismatch** — request requires tool calling (`requires.tools: true`), but the demo force-constructs Router with only the local adapter. Ollama rejects pre-HTTP with `CapabilityMismatchError`; router throws `NoTierAvailableError` with a 1-deep fallChain.
+4. **Provider down** — the highest-priority adapter is wrapped to throw `ProviderUnavailableError`. Router falls past it transparently; the next tier serves. `fallChain[0].reason === 'provider-unavailable'`.
+
+## Run locally without Docker
+
+If you already have Ollama running locally with `llama3.2:3b` pulled:
 
 ```bash
-docker compose -f apps/demo-cli/docker-compose.yml down
+pnpm install
+pnpm exec nx run-many --target=build --projects=core,adapter-ollama,adapter-anthropic,adapter-openai-compatible,demo-cli
+node apps/demo-cli/dist/main.cjs
 ```
 
-## Cloud-only profile
-
-To skip Ollama entirely (useful once cloud-fall scenarios land):
-
-```bash
-docker compose -f apps/demo-cli/docker-compose.yml --profile cloud up demo-cloud-only
-```
-
-Make sure to export `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `DEEPSEEK_API_KEY`
-in your environment first — see `.env.example`.
-
-## Status
-
-Scaffold only. The scenario logic — the actual fall demonstration — ships in
-issue #9. Today the demo prints which adapters are configured and exits.
+Set env vars via your shell (e.g., `ANTHROPIC_API_KEY=sk-ant-... node apps/demo-cli/dist/main.cjs`).

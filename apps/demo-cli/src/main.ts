@@ -1,14 +1,29 @@
-function main(): void {
-  console.log(
-    '[tierfall demo] Scaffolding complete. Scenario logic ships in issue #9.\n' +
-      '[tierfall demo] Configured adapters from env:',
-  );
-  console.log({
-    OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL ?? '(not set)',
-    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ? '***set***' : '(not set)',
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? '***set***' : '(not set)',
-    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ? '***set***' : '(not set)',
-  });
+import { buildAdapters } from './build-adapters.js';
+import { printTopBanner, printRunSummary } from './banner.js';
+import { runBasicScenario } from './scenarios/basic.js';
+import { runBudgetFallScenario } from './scenarios/budget-fall.js';
+import { runCapabilityScenario } from './scenarios/capability.js';
+import { runProviderDownScenario } from './scenarios/provider-down.js';
+
+async function main(): Promise<void> {
+  const { adapters, status } = buildAdapters(process.env);
+  printTopBanner(status);
+
+  const results: boolean[] = [];
+  results.push(await runBasicScenario(adapters));
+  results.push(await runBudgetFallScenario(adapters));
+  results.push(await runCapabilityScenario(adapters));
+  results.push(await runProviderDownScenario(adapters));
+
+  const passed = results.filter((r) => r).length;
+  printRunSummary(passed, results.length);
+
+  if (passed !== results.length) {
+    process.exitCode = 1;
+  }
 }
 
-main();
+main().catch((err: unknown) => {
+  console.error('Demo failed:', err);
+  process.exit(1);
+});
