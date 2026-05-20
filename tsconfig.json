@@ -1,4 +1,9 @@
 {
   "include": [],
-  "references": [{ "path": "./packages/core" }]
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/adapter-ollama" },
+    { "path": "./packages/adapter-openai-compatible" },
+    { "path": "./packages/adapter-anthropic" }
+  ]
 }
