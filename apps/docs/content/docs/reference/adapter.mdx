@@ -1,0 +1,70 @@
+---
+title: Adapter interface
+description: The contract every TierFall adapter implements.
+---
+
+## Contract
+
+```ts
+import type { Adapter, AdapterCapability, Tier, LLMRequest, LLMResponse } from '@tierfall/core';
+
+interface Adapter {
+  readonly name: string;
+  readonly tier: Tier;
+  readonly capability: AdapterCapability;
+  complete(request: LLMRequest): Promise<LLMResponse>;
+}
+```
+
+Every adapter implements this interface. v0.1 ships three adapter packages (`@tierfall/adapter-ollama`, `@tierfall/adapter-openai-compatible`, `@tierfall/adapter-anthropic`) — you can also author your own to add support for any provider that exposes a chat-completion-shaped API.
+
+## Field meanings
+
+| Field | Purpose |
+|---|---|
+| `name` | Identifies adapter instances in `FallDiagnostic.adapterName`. Pick something the demo's `formatFallChain` output reads clearly. |
+| `tier` | Declares which routing tier this adapter serves. Read by `DefaultPolicy` for sort order. |
+| `capability` | What this adapter can / can't do. Consumed by the policy to filter unsuitable adapters before the router sees them. |
+| `complete` | Executes the request against the provider. Throws one of four typed errors on failure (see below). |
+
+## What an adapter MUST throw
+
+The router classifies thrown errors into fall reasons by type. Stick to the canonical set:
+
+| Condition | Error to throw | Becomes `reason` |
+|---|---|---|
+| Network failure / unexpected 4xx / 5xx (non-rate-limit) / malformed response | `ProviderUnavailableError` | `'provider-unavailable'` |
+| Rate limit / quota exceeded | `BudgetExceededError` | `'budget'` |
+| Request needs capability the adapter doesn't have | `CapabilityMismatchError` | `'capability'` |
+| Anything else | Any `Error` | `'unknown'` |
+
+All four are exported from `@tierfall/core`. Each carries an `@example` block in its TSDoc showing the typical throw site.
+
+## What the Router does with the response
+
+The router **overrides** `tier` and `fallChain` on the returned `LLMResponse`. The adapter's job is to populate:
+
+- `text` — what the model said (concatenate text blocks for providers that return arrays)
+- `model` — the model name the request actually ran against
+- `usage` — `{ inputTokens, outputTokens, estimatedCostUSD }`
+
+Whatever the adapter sets for `tier` and `fallChain` is replaced before the response reaches the caller. The adapter shouldn't try to predict its own place in the fall chain.
+
+## Authoring a new adapter
+
+The repo includes a scaffold script:
+
+```bash
+pnpm scaffold:adapter myvendor
+```
+
+This creates `packages/adapter-myvendor/` with the canonical structure (package.json, tsconfig, tsup config, jest config, src/index.ts, src/adapter.ts skeleton, test/adapter.test.ts with a failing TDD test, README, CLAUDE.md). You fill in `complete`, declare your `tier` and `capability`, add real tests, open a PR.
+
+If your adapter targets an OpenAI-compatible endpoint, consider whether you should add a preset to `@tierfall/adapter-openai-compatible` instead — that's the path for Groq, DeepSeek, Cerebras, etc.
+
+## Read next
+
+- [@tierfall/adapter-ollama](/docs/reference/adapter-ollama) — on-device implementation
+- [@tierfall/adapter-openai-compatible](/docs/reference/adapter-openai-compatible) — five blessed presets
+- [@tierfall/adapter-anthropic](/docs/reference/adapter-anthropic) — premium tier
+- [The four tiers](/docs/concepts/tiers)

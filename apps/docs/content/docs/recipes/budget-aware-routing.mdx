@@ -1,0 +1,127 @@
+---
+title: Budget-aware routing
+description: Use maxCostUSD to keep request costs inside a hard cap. The policy filters expensive tiers before the router gets the request.
+---
+
+## What this shows
+
+This recipe demonstrates **policy filtering**, not router falling. When you set `maxCostUSD` on a request, `DefaultPolicy.evaluate` excludes adapters whose 500-input + 500-output estimated cost exceeds the cap *before* the router sees them. The request lands on the highest-priority surviving tier, and `fallChain` is empty because nothing actually fell.
+
+## Setup
+
+```ts
+import { Router, DefaultPolicy, formatFallChain } from '@tierfall/core';
+import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+import { presets } from '@tierfall/adapter-openai-compatible/presets';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const allAdapters = [
+  new AnthropicAdapter({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+    model: 'claude-sonnet-4-7',
+  }),
+  new OpenAICompatibleAdapter(
+    presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! }),
+  ),
+  new OllamaAdapter({ model: 'llama3.2:3b' }),
+];
+```
+
+Three adapters across three tiers — premium, cheap, on-device. Their representative pricing:
+
+| Tier | Adapter | Estimated cost per 500+500 token request |
+|---|---|---|
+| `premium-cloud` | Anthropic Sonnet | ~$0.009 |
+| `cheap-cloud` | DeepSeek | ~$0.0007 |
+| `on-device` | Ollama | $0 (free) |
+
+## The request with a cap
+
+```ts
+const request = {
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Reply with exactly "ok".' }],
+  maxCostUSD: 0.0001,
+};
+
+const policy = new DefaultPolicy();
+const ordered = policy.evaluate(request, allAdapters);
+console.log('Survivors:', ordered.map((a) => a.name));
+// → Survivors: [ 'ollama' ]
+```
+
+With `maxCostUSD: 0.0001`, premium (~$0.009 > $0.0001) and cheap (~$0.0007 > $0.0001) are both excluded. Only Ollama survives because its cost is `0`.
+
+## What happens at the router
+
+```ts
+const router = new Router(ordered);
+const response = await router.complete(request);
+
+console.log('Served by:', response.tier);
+// → Served by: on-device
+
+console.log('Fall chain length:', response.fallChain.length);
+// → Fall chain length: 0
+```
+
+`fallChain` is **empty** — that's the key teaching moment. The expensive tiers were never tried by the router. The *policy* filtered them silently at pre-flight. A *fall* only gets recorded when the router tries an adapter and that adapter throws. Here nothing threw because nothing was tried.
+
+## Comparison: a real fall on top of the filter
+
+If you set the cap higher so DeepSeek survives, but DeepSeek is genuinely unavailable at request time:
+
+```ts
+const request = {
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Reply with exactly "ok".' }],
+  maxCostUSD: 0.001, // DeepSeek (~$0.0007) survives; premium excluded
+};
+
+const ordered = policy.evaluate(request, allAdapters);
+// → ordered = [ deepseek, ollama ]  (premium filtered out)
+
+const response = await router.complete(request);
+// If DeepSeek is down → router falls to Ollama
+// response.tier === 'on-device'
+// response.fallChain.length === 1
+// response.fallChain[0].reason === 'provider-unavailable'
+
+console.log(formatFallChain(response.fallChain));
+// →   1. cheap-cloud / openai-compatible — provider-unavailable: ...
+```
+
+Here `fallChain` has one entry — for DeepSeek. The premium tier doesn't appear in the chain because it was filtered, not failed. Two distinct mechanisms, both visible in the diagnostic output if you know where to look.
+
+## Inspecting the cost decision
+
+If you want to debug *why* an adapter was filtered:
+
+```ts
+import type { Adapter, AdapterCapability } from '@tierfall/core';
+
+function estimatedCost(cap: AdapterCapability): number {
+  const inputCost = ((cap.costPerMillionInputTokens ?? 0) / 1_000_000) * 500;
+  const outputCost = ((cap.costPerMillionOutputTokens ?? 0) / 1_000_000) * 500;
+  return inputCost + outputCost;
+}
+
+for (const adapter of allAdapters) {
+  const cost = estimatedCost(adapter.capability);
+  const fits = cost <= 0.0001;
+  console.log(`${adapter.name}: $${cost.toFixed(6)} → ${fits ? 'survives' : 'filtered'}`);
+}
+```
+
+This mirrors the policy's internal logic. Useful when you're tuning cap values and want to know exactly where the cutoff lands.
+
+## Want to climb instead?
+
+If a request fails on every available adapter, you'd want to retry with a higher cap or fewer requirements. v0.1 doesn't ship an explicit "climb" mechanism — you'd construct a new request with a relaxed cap and retry manually. A future version may introduce a policy override like `forceTier`.
+
+## Read next
+
+- [Fall, never climb](/docs/concepts/fall-never-climb) — the routing thesis
+- [Policy](/docs/concepts/policy) — filter table + cost formula
+- [@tierfall/adapter-openai-compatible](/docs/reference/adapter-openai-compatible) — preset pricing values

@@ -1,0 +1,142 @@
+---
+title: Getting started
+description: Local install, demo run, and your first request.
+---
+
+## Prerequisites
+
+- **Node 24 LTS** (older Node may work; v0.1 is tested on 24.x)
+- **pnpm 10** (via Corepack: `corepack enable && corepack prepare pnpm@latest --activate`)
+- **Docker + Docker Compose** (for the demo) OR a local Ollama daemon
+
+## Try the demo
+
+The fastest way to see TierFall in action is the containerized demo. It spins up an Ollama service, pulls a small model (`llama3.2:3b`, ~2GB), builds the demo app, and runs four scenarios end-to-end.
+
+```bash
+git clone https://github.com/tierfall/tierfall
+cd tierfall
+docker compose -f apps/demo-cli/docker-compose.yml up --abort-on-container-exit demo
+```
+
+The first run takes 10–20 minutes because of the model pull. Subsequent runs reuse the cached volume and complete in ~30 seconds.
+
+The four scenarios cover:
+
+1. **Basic chat** — happy path against the highest-priority tier
+2. **Budget filter** — `maxCostUSD` filters expensive tiers; local serves
+3. **Capability mismatch** — `requires.tools: true` against a tools-less adapter; router throws `NoTierAvailableError`
+4. **Provider down** — top-priority adapter wrapped to fail; router falls past it
+
+Each scenario prints what was expected, what actually happened, and the full fall chain when applicable. The demo container exits 0 when all four produce their expected outcomes.
+
+Add cloud-tier API keys to make the scenarios more interesting:
+
+```bash
+cat > .env <<EOF
+ANTHROPIC_API_KEY=sk-ant-...
+DEEPSEEK_API_KEY=sk-...
+EOF
+docker compose -f apps/demo-cli/docker-compose.yml up --abort-on-container-exit demo
+```
+
+Missing keys are skipped with `[tierfall] X adapter skipped — Y_API_KEY not set`; the demo still runs against whatever's available.
+
+## Install in your own project
+
+Pick one tier to start with:
+
+```bash
+pnpm add @tierfall/core @tierfall/adapter-ollama
+```
+
+Or grab the full set if you want to compose them:
+
+```bash
+pnpm add @tierfall/core @tierfall/adapter-ollama @tierfall/adapter-openai-compatible @tierfall/adapter-anthropic
+```
+
+## Your first request
+
+```ts
+import { Router, DefaultPolicy } from '@tierfall/core';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const adapters = [new OllamaAdapter({ model: 'llama3.2:3b' })];
+
+const policy = new DefaultPolicy();
+const ordered = policy.evaluate(
+  { model: 'auto', messages: [] },
+  adapters,
+);
+
+const router = new Router(ordered);
+
+const response = await router.complete({
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Say "ok" and nothing else.' }],
+});
+
+console.log({
+  text: response.text,
+  tier: response.tier,
+  inputTokens: response.usage.inputTokens,
+  outputTokens: response.usage.outputTokens,
+  fallChain: response.fallChain,
+});
+```
+
+This is the canonical shape: build adapters, run them through the policy, hand the ordered list to a `Router`, await `complete`. The response carries `text` (what the model said), `tier` (which tier ultimately served), `usage` (token + cost accounting), and `fallChain` (empty here because the first adapter succeeded).
+
+## Compose multiple tiers
+
+Add cloud tiers in front of Ollama for actual fall behavior:
+
+```ts
+import { Router, DefaultPolicy } from '@tierfall/core';
+import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+import { presets } from '@tierfall/adapter-openai-compatible/presets';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const adapters = [
+  new AnthropicAdapter({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+    model: 'claude-sonnet-4-7',
+  }),
+  new OpenAICompatibleAdapter(
+    presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! }),
+  ),
+  new OllamaAdapter({ model: 'llama3.2:3b' }),
+];
+```
+
+See [the adapter reference pages](/docs/reference/adapter-ollama) for per-package configuration details.
+
+## Inspect a fall
+
+Set a low cost cap and watch the policy filter expensive tiers before the router even sees them:
+
+```ts
+import { formatFallChain } from '@tierfall/core';
+
+const response = await router.complete({
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Say "ok".' }],
+  maxCostUSD: 0.0001,
+});
+
+console.log('Served by:', response.tier);
+if (response.fallChain.length > 0) {
+  console.log('Falls before success:');
+  console.log(formatFallChain(response.fallChain));
+}
+```
+
+When cost caps trigger before any HTTP, the fall chain is empty — that's a **filter**, not a **fall**. See [Fall, never climb](/docs/concepts/fall-never-climb) for the distinction.
+
+## Read next
+
+- [The four tiers](/docs/concepts/tiers) — what each tier represents
+- [Fall, never climb](/docs/concepts/fall-never-climb) — the routing thesis
+- [Adapter interface](/docs/reference/adapter) — author your own adapter

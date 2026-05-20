@@ -1,4 +1,4 @@
 {
-  "title": "Docs",
-  "pages": ["index", "concepts"]
+  "title": "TierFall",
+  "pages": ["index", "getting-started", "concepts", "reference", "recipes"]
 }

@@ -1,0 +1,102 @@
+---
+title: '@tierfall/adapter-anthropic'
+description: Premium-cloud tier adapter for Anthropic's Messages API.
+---
+
+## Install
+
+```bash
+pnpm add @tierfall/adapter-anthropic @tierfall/core
+```
+
+## Configure
+
+```ts
+import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+
+const adapter = new AnthropicAdapter({
+  apiKey: process.env.ANTHROPIC_API_KEY!,    // required
+  model: 'claude-sonnet-4-7',                 // required
+});
+```
+
+| Field | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `apiKey` | `string` | **yes** | — | Sent as `x-api-key` header. Constructor throws on missing/empty. |
+| `model` | `string` | yes | — | E.g. `'claude-sonnet-4-7'`, `'claude-opus-4-7'`. |
+| `baseUrl` | `string` | no | `'https://api.anthropic.com'` | Override for proxies. |
+| `capability` | `Partial<AdapterCapability>` | no | Sonnet 4.7 defaults | Override per instance. |
+
+## Default capability
+
+```ts
+{
+  contextWindowTokens: 200_000,
+  supportsTools: false,
+  supportsStreaming: false,
+  supportsStructuredOutput: false,
+  costPerMillionInputTokens: 3,
+  costPerMillionOutputTokens: 15,
+}
+```
+
+The 200K context window matches Claude Sonnet 4.7. The `$3/$15` pricing is representative — verify against `anthropic.com/pricing` and override via `config.capability` if it has shifted.
+
+## API differences from OpenAI
+
+Anthropic's Messages API differs from OpenAI's Chat Completions in three notable ways. The adapter handles each transparently:
+
+**System messages live at the top level.** Anthropic forbids `role: 'system'` inside `messages[]`. The adapter extracts every system message from `request.messages`, concatenates their content with `\n\n`, and sends them as the top-level `system` field. The rest go in `messages`.
+
+```ts
+// What you send to the adapter:
+{ messages: [
+    { role: 'system', content: 'You are concise.' },
+    { role: 'user', content: 'Hello!' },
+] }
+
+// What the adapter sends to Anthropic:
+{
+  system: 'You are concise.',
+  messages: [{ role: 'user', content: 'Hello!' }],
+}
+```
+
+**Content is an array of blocks.** The response's `content` field looks like `[{type: 'text', text: '...'}, {type: 'tool_use', ...}, ...]`. The adapter concatenates `text` fields from `type: 'text'` blocks and ignores the others in v0.1.
+
+**`max_tokens` is required.** Anthropic rejects requests that omit it. The adapter defaults to 4096; override via `request.maxOutputTokens`.
+
+## Gotchas
+
+- **429 maps to `BudgetExceededError`**, not `ProviderUnavailableError`. Rate limits and quota errors are budget signals; falling to a cheaper tier is correct.
+- **`requires.tools === true` is rejected pre-HTTP** with `CapabilityMismatchError`. Sonnet 4.7 supports tool calling, but TierFall's integration is v0.4 work.
+- **Constructor throws on missing `apiKey`.** Plain `Error`, not a runtime fall — this is a config bug.
+- **No `@anthropic-ai/sdk` dependency.** Built-in `fetch` against `POST /v1/messages` with `anthropic-version: 2023-06-01` header.
+- **Timeout is fixed at 30 seconds.**
+
+## Use with Router
+
+```ts
+import { Router, DefaultPolicy } from '@tierfall/core';
+import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const router = new Router(
+  new DefaultPolicy().evaluate(
+    { model: 'auto', messages: [] },
+    [
+      new AnthropicAdapter({
+        apiKey: process.env.ANTHROPIC_API_KEY!,
+        model: 'claude-sonnet-4-7',
+      }),
+      new OllamaAdapter({ model: 'llama3.2:3b' }),
+    ],
+  ),
+);
+```
+
+## Read next
+
+- [Adapter interface](/docs/reference/adapter)
+- [The four tiers](/docs/concepts/tiers) — what `premium-cloud` means
+- [@tierfall/adapter-openai-compatible](/docs/reference/adapter-openai-compatible) — when you'd rather use the OpenAI shape
