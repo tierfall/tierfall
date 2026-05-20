@@ -25,3 +25,6 @@ apps/docs/.source/
 
 # Claude Code runtime worktrees (per-agent ephemeral checkouts)
 .claude/worktrees/
+
+# gitnexus local index database
+.gitnexus/
