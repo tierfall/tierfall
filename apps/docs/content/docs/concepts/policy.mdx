@@ -20,15 +20,15 @@ In v0.1 you call the policy manually. A future version can introduce `new Router
 
 ## Filters
 
-An adapter must pass *every* active filter to survive. Filters combine with AND:
+An adapter must pass _every_ active filter to survive. Filters combine with AND:
 
-| Request field | Excludes adapter when... |
-|---|---|
-| `requires.minContextWindowTokens: N` | `capability.contextWindowTokens < N` (strict `<`) |
-| `requires.tools: true` | `capability.supportsTools === false` |
-| `requires.streaming: true` | `capability.supportsStreaming === false` |
-| `requires.structuredOutput: true` | `capability.supportsStructuredOutput === false` |
-| `maxCostUSD: C` | `estimateCost(capability) > C` (strict `>`; equality survives) |
+| Request field                        | Excludes adapter when...                                       |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `requires.minContextWindowTokens: N` | `capability.contextWindowTokens < N` (strict `<`)              |
+| `requires.tools: true`               | `capability.supportsTools === false`                           |
+| `requires.streaming: true`           | `capability.supportsStreaming === false`                       |
+| `requires.structuredOutput: true`    | `capability.supportsStructuredOutput === false`                |
+| `maxCostUSD: C`                      | `estimateCost(capability) > C` (strict `>`; equality survives) |
 
 A `requires` field that's `undefined`, `false`, or absent doesn't filter anything — only the active triggers above apply.
 
@@ -46,14 +46,14 @@ function estimateCost(cap: AdapterCapability): number {
 
 This is a deliberate simplification. A future version can introduce per-request tokenizer-based estimation. `null` costs (typically `on-device`) map to `0`.
 
-The comparison is strict greater-than — an adapter whose estimated cost equals the cap *survives*. That's locked in by tests; it's the kind of edge case that's easy to flip during a refactor.
+The comparison is strict greater-than — an adapter whose estimated cost equals the cap _survives_. That's locked in by tests; it's the kind of edge case that's easy to flip during a refactor.
 
 ## Sort
 
 The survivors are stable-sorted by `TIERS.indexOf(adapter.tier)` ascending:
 
 ```ts
-[...survivors].sort((a, b) => TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier))
+[...survivors].sort((a, b) => TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier));
 ```
 
 Stable sort is part of the ES2019 spec; the result preserves input order within a tier. Two `premium-cloud` adapters in the input list will appear in that same order in the result. Useful when you've configured (say) Anthropic as your primary and OpenAI as a backup at the same tier — Anthropic's input order makes it first.

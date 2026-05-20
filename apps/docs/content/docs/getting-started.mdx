@@ -65,10 +65,7 @@ import { OllamaAdapter } from '@tierfall/adapter-ollama';
 const adapters = [new OllamaAdapter({ model: 'llama3.2:3b' })];
 
 const policy = new DefaultPolicy();
-const ordered = policy.evaluate(
-  { model: 'auto', messages: [] },
-  adapters,
-);
+const ordered = policy.evaluate({ model: 'auto', messages: [] }, adapters);
 
 const router = new Router(ordered);
 
@@ -104,9 +101,7 @@ const adapters = [
     apiKey: process.env.ANTHROPIC_API_KEY!,
     model: 'claude-sonnet-4-7',
   }),
-  new OpenAICompatibleAdapter(
-    presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! }),
-  ),
+  new OpenAICompatibleAdapter(presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! })),
   new OllamaAdapter({ model: 'llama3.2:3b' }),
 ];
 ```

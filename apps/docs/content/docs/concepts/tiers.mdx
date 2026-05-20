@@ -3,25 +3,20 @@ title: The four tiers
 description: TierFall recognizes four routing tiers. Each captures a cost / capability / availability tradeoff.
 ---
 
-TierFall classifies every adapter into one of four tiers. Index `0` is the most expensive; index `3` is the cheapest. The router *falls* from low-index to high-index — never the other way without explicit opt-in.
+TierFall classifies every adapter into one of four tiers. Index `0` is the most expensive; index `3` is the cheapest. The router _falls_ from low-index to high-index — never the other way without explicit opt-in.
 
 ```ts
-export const TIERS = [
-  'premium-cloud',
-  'cheap-cloud',
-  'self-hosted-edge',
-  'on-device',
-] as const;
+export const TIERS = ['premium-cloud', 'cheap-cloud', 'self-hosted-edge', 'on-device'] as const;
 ```
 
 ## The tiers
 
-| Tier | Index | Typical providers | Cost shape | Notes |
-|---|---|---|---|---|
-| `premium-cloud` | 0 | Claude, GPT-5 | Highest | First attempted by default |
-| `cheap-cloud` | 1 | DeepSeek, Groq, Cerebras | Cheap per-token | Fan-out via the OpenAI-compatible adapter |
-| `self-hosted-edge` | 2 | vLLM, LM Studio, self-hosted Anthropic compat | Free + your infra cost | OpenAI-compatible against your private URL |
-| `on-device` | 3 | Ollama, llama.cpp | Free | Lives on the caller's machine |
+| Tier               | Index | Typical providers                             | Cost shape             | Notes                                      |
+| ------------------ | ----- | --------------------------------------------- | ---------------------- | ------------------------------------------ |
+| `premium-cloud`    | 0     | Claude, GPT-5                                 | Highest                | First attempted by default                 |
+| `cheap-cloud`      | 1     | DeepSeek, Groq, Cerebras                      | Cheap per-token        | Fan-out via the OpenAI-compatible adapter  |
+| `self-hosted-edge` | 2     | vLLM, LM Studio, self-hosted Anthropic compat | Free + your infra cost | OpenAI-compatible against your private URL |
+| `on-device`        | 3     | Ollama, llama.cpp                             | Free                   | Lives on the caller's machine              |
 
 A single adapter package can serve multiple tiers depending on configuration. `@tierfall/adapter-openai-compatible` is the clearest example — point it at OpenAI for premium, at Groq for cheap, at vLLM for self-hosted-edge. The `tier` field on the adapter instance is what the policy actually sees.
 
@@ -29,7 +24,7 @@ A single adapter package can serve multiple tiers depending on configuration. `@
 
 Falling toward cheaper composes naturally with budget caps: if a premium adapter throws `BudgetExceededError`, falling to a cheaper tier is the right move — the next adapter is cheaper by definition. Climbing the other direction risks runaway cost in the failure path.
 
-The tier hierarchy also encodes a rough capability-vs-availability tradeoff. Frontier models live in premium; smaller fast models live in cheap; local quantized models live on-device. The router's job is to find the highest-fidelity tier that's actually available *and* within budget *and* capable of the request — falling progressively until one fits.
+The tier hierarchy also encodes a rough capability-vs-availability tradeoff. Frontier models live in premium; smaller fast models live in cheap; local quantized models live on-device. The router's job is to find the highest-fidelity tier that's actually available _and_ within budget _and_ capable of the request — falling progressively until one fits.
 
 ## Each adapter declares its tier
 
@@ -67,7 +62,7 @@ interface AdapterCapability {
 }
 ```
 
-In v0.1, `supportsTools` / `supportsStreaming` / `supportsStructuredOutput` are conservatively `false` on every adapter. The capability is a contract about what *the adapter* does today, not what the underlying model could theoretically do. v0.4 will flip these flags alongside wire-level implementation.
+In v0.1, `supportsTools` / `supportsStreaming` / `supportsStructuredOutput` are conservatively `false` on every adapter. The capability is a contract about what _the adapter_ does today, not what the underlying model could theoretically do. v0.4 will flip these flags alongside wire-level implementation.
 
 `null` costs (typically `on-device`) indicate free tier and are treated as `0` in the policy's cost estimator.
 

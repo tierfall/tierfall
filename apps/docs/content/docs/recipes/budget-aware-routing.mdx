@@ -5,7 +5,7 @@ description: Use maxCostUSD to keep request costs inside a hard cap. The policy 
 
 ## What this shows
 
-This recipe demonstrates **policy filtering**, not router falling. When you set `maxCostUSD` on a request, `DefaultPolicy.evaluate` excludes adapters whose 500-input + 500-output estimated cost exceeds the cap *before* the router sees them. The request lands on the highest-priority surviving tier, and `fallChain` is empty because nothing actually fell.
+This recipe demonstrates **policy filtering**, not router falling. When you set `maxCostUSD` on a request, `DefaultPolicy.evaluate` excludes adapters whose 500-input + 500-output estimated cost exceeds the cap _before_ the router sees them. The request lands on the highest-priority surviving tier, and `fallChain` is empty because nothing actually fell.
 
 ## Setup
 
@@ -21,20 +21,18 @@ const allAdapters = [
     apiKey: process.env.ANTHROPIC_API_KEY!,
     model: 'claude-sonnet-4-7',
   }),
-  new OpenAICompatibleAdapter(
-    presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! }),
-  ),
+  new OpenAICompatibleAdapter(presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! })),
   new OllamaAdapter({ model: 'llama3.2:3b' }),
 ];
 ```
 
 Three adapters across three tiers — premium, cheap, on-device. Their representative pricing:
 
-| Tier | Adapter | Estimated cost per 500+500 token request |
-|---|---|---|
-| `premium-cloud` | Anthropic Sonnet | ~$0.009 |
-| `cheap-cloud` | DeepSeek | ~$0.0007 |
-| `on-device` | Ollama | $0 (free) |
+| Tier            | Adapter          | Estimated cost per 500+500 token request |
+| --------------- | ---------------- | ---------------------------------------- |
+| `premium-cloud` | Anthropic Sonnet | ~$0.009                                  |
+| `cheap-cloud`   | DeepSeek         | ~$0.0007                                 |
+| `on-device`     | Ollama           | $0 (free)                                |
 
 ## The request with a cap
 
@@ -47,7 +45,10 @@ const request = {
 
 const policy = new DefaultPolicy();
 const ordered = policy.evaluate(request, allAdapters);
-console.log('Survivors:', ordered.map((a) => a.name));
+console.log(
+  'Survivors:',
+  ordered.map((a) => a.name),
+);
 // → Survivors: [ 'ollama' ]
 ```
 
@@ -66,7 +67,7 @@ console.log('Fall chain length:', response.fallChain.length);
 // → Fall chain length: 0
 ```
 
-`fallChain` is **empty** — that's the key teaching moment. The expensive tiers were never tried by the router. The *policy* filtered them silently at pre-flight. A *fall* only gets recorded when the router tries an adapter and that adapter throws. Here nothing threw because nothing was tried.
+`fallChain` is **empty** — that's the key teaching moment. The expensive tiers were never tried by the router. The _policy_ filtered them silently at pre-flight. A _fall_ only gets recorded when the router tries an adapter and that adapter throws. Here nothing threw because nothing was tried.
 
 ## Comparison: a real fall on top of the filter
 
@@ -96,7 +97,7 @@ Here `fallChain` has one entry — for DeepSeek. The premium tier doesn't appear
 
 ## Inspecting the cost decision
 
-If you want to debug *why* an adapter was filtered:
+If you want to debug _why_ an adapter was filtered:
 
 ```ts
 import type { Adapter, AdapterCapability } from '@tierfall/core';

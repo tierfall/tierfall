@@ -16,16 +16,16 @@ import { OllamaAdapter } from '@tierfall/adapter-ollama';
 
 const adapter = new OllamaAdapter({
   baseUrl: 'http://localhost:11434', // default; override for non-localhost daemons
-  model: 'llama3.2:3b',              // required
+  model: 'llama3.2:3b', // required
 });
 ```
 
-| Field | Type | Required | Default | Meaning |
-|---|---|---|---|---|
-| `baseUrl` | `string` | no | `'http://localhost:11434'` | The Ollama daemon URL. Trailing slash is normalized. |
-| `apiKey` | `string` | no | — | Accepted for cloud-adapter parity, **ignored**. Ollama doesn't authenticate. |
-| `model` | `string` | yes | — | E.g. `'llama3.2:3b'`. The model must be pulled (`ollama pull <model>`) before the daemon can serve it. |
-| `capability` | `Partial<AdapterCapability>` | no | sensible defaults below | Override individual capability fields per instance. |
+| Field        | Type                         | Required | Default                    | Meaning                                                                                                |
+| ------------ | ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `baseUrl`    | `string`                     | no       | `'http://localhost:11434'` | The Ollama daemon URL. Trailing slash is normalized.                                                   |
+| `apiKey`     | `string`                     | no       | —                          | Accepted for cloud-adapter parity, **ignored**. Ollama doesn't authenticate.                           |
+| `model`      | `string`                     | yes      | —                          | E.g. `'llama3.2:3b'`. The model must be pulled (`ollama pull <model>`) before the daemon can serve it. |
+| `capability` | `Partial<AdapterCapability>` | no       | sensible defaults below    | Override individual capability fields per instance.                                                    |
 
 ## Default capability
 
@@ -58,10 +58,9 @@ import { Router, DefaultPolicy } from '@tierfall/core';
 import { OllamaAdapter } from '@tierfall/adapter-ollama';
 
 const router = new Router(
-  new DefaultPolicy().evaluate(
-    { model: 'auto', messages: [] },
-    [new OllamaAdapter({ model: 'llama3.2:3b' })],
-  ),
+  new DefaultPolicy().evaluate({ model: 'auto', messages: [] }, [
+    new OllamaAdapter({ model: 'llama3.2:3b' }),
+  ]),
 );
 
 const response = await router.complete({

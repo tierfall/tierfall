@@ -20,23 +20,23 @@ Every adapter implements this interface. v0.1 ships three adapter packages (`@ti
 
 ## Field meanings
 
-| Field | Purpose |
-|---|---|
-| `name` | Identifies adapter instances in `FallDiagnostic.adapterName`. Pick something the demo's `formatFallChain` output reads clearly. |
-| `tier` | Declares which routing tier this adapter serves. Read by `DefaultPolicy` for sort order. |
-| `capability` | What this adapter can / can't do. Consumed by the policy to filter unsuitable adapters before the router sees them. |
-| `complete` | Executes the request against the provider. Throws one of four typed errors on failure (see below). |
+| Field        | Purpose                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | Identifies adapter instances in `FallDiagnostic.adapterName`. Pick something the demo's `formatFallChain` output reads clearly. |
+| `tier`       | Declares which routing tier this adapter serves. Read by `DefaultPolicy` for sort order.                                        |
+| `capability` | What this adapter can / can't do. Consumed by the policy to filter unsuitable adapters before the router sees them.             |
+| `complete`   | Executes the request against the provider. Throws one of four typed errors on failure (see below).                              |
 
 ## What an adapter MUST throw
 
 The router classifies thrown errors into fall reasons by type. Stick to the canonical set:
 
-| Condition | Error to throw | Becomes `reason` |
-|---|---|---|
+| Condition                                                                    | Error to throw             | Becomes `reason`         |
+| ---------------------------------------------------------------------------- | -------------------------- | ------------------------ |
 | Network failure / unexpected 4xx / 5xx (non-rate-limit) / malformed response | `ProviderUnavailableError` | `'provider-unavailable'` |
-| Rate limit / quota exceeded | `BudgetExceededError` | `'budget'` |
-| Request needs capability the adapter doesn't have | `CapabilityMismatchError` | `'capability'` |
-| Anything else | Any `Error` | `'unknown'` |
+| Rate limit / quota exceeded                                                  | `BudgetExceededError`      | `'budget'`               |
+| Request needs capability the adapter doesn't have                            | `CapabilityMismatchError`  | `'capability'`           |
+| Anything else                                                                | Any `Error`                | `'unknown'`              |
 
 All four are exported from `@tierfall/core`. Each carries an `@example` block in its TSDoc showing the typical throw site.
 

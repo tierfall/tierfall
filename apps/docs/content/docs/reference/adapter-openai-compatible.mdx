@@ -19,20 +19,20 @@ A growing list of providers serve the OpenAI Chat Completions API shape (`POST /
 import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
 
 const adapter = new OpenAICompatibleAdapter({
-  apiKey: process.env.GROQ_API_KEY!,           // required
-  model: 'llama-3.3-70b-versatile',            // required
-  baseUrl: 'https://api.groq.com/openai/v1',   // default https://api.openai.com/v1
-  tier: 'cheap-cloud',                          // default 'cheap-cloud'
+  apiKey: process.env.GROQ_API_KEY!, // required
+  model: 'llama-3.3-70b-versatile', // required
+  baseUrl: 'https://api.groq.com/openai/v1', // default https://api.openai.com/v1
+  tier: 'cheap-cloud', // default 'cheap-cloud'
 });
 ```
 
-| Field | Type | Required | Default | Meaning |
-|---|---|---|---|---|
-| `apiKey` | `string` | **yes** | — | Sent as `Authorization: Bearer <key>`. The constructor throws on missing/empty. |
-| `model` | `string` | yes | — | Provider-specific. For OpenRouter, use `provider/model` slug format. |
-| `baseUrl` | `string` | no | `'https://api.openai.com/v1'` | Should include the `/v1` segment; adapter appends `/chat/completions`. |
-| `tier` | `Tier` | no | `'cheap-cloud'` | Override per provider. OpenAI itself is `'premium-cloud'`; vLLM is `'self-hosted-edge'`. |
-| `capability` | `Partial<AdapterCapability>` | no | conservative defaults | Override individual capability fields. |
+| Field        | Type                         | Required | Default                       | Meaning                                                                                  |
+| ------------ | ---------------------------- | -------- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `apiKey`     | `string`                     | **yes**  | —                             | Sent as `Authorization: Bearer <key>`. The constructor throws on missing/empty.          |
+| `model`      | `string`                     | yes      | —                             | Provider-specific. For OpenRouter, use `provider/model` slug format.                     |
+| `baseUrl`    | `string`                     | no       | `'https://api.openai.com/v1'` | Should include the `/v1` segment; adapter appends `/chat/completions`.                   |
+| `tier`       | `Tier`                       | no       | `'cheap-cloud'`               | Override per provider. OpenAI itself is `'premium-cloud'`; vLLM is `'self-hosted-edge'`. |
+| `capability` | `Partial<AdapterCapability>` | no       | conservative defaults         | Override individual capability fields.                                                   |
 
 ## Default capability
 
@@ -61,13 +61,13 @@ const adapter = new OpenAICompatibleAdapter(
 );
 ```
 
-| Preset | Default model | Tier | $/MTok input | $/MTok output |
-|---|---|---|---|---|
-| `groq` | `llama-3.3-70b-versatile` | `cheap-cloud` | 0.59 | 0.79 |
-| `deepseek` | `deepseek-chat` | `cheap-cloud` | 0.27 | 1.10 |
-| `openai` | `gpt-5-mini` | `premium-cloud` | 0.15 | 0.60 |
-| `cerebras` | `llama3.3-70b` | `cheap-cloud` | 0.85 | 1.20 |
-| `openrouter` | `openai/gpt-5-mini` | `cheap-cloud` | 0.15 | 0.60 |
+| Preset       | Default model             | Tier            | $/MTok input | $/MTok output |
+| ------------ | ------------------------- | --------------- | ------------ | ------------- |
+| `groq`       | `llama-3.3-70b-versatile` | `cheap-cloud`   | 0.59         | 0.79          |
+| `deepseek`   | `deepseek-chat`           | `cheap-cloud`   | 0.27         | 1.10          |
+| `openai`     | `gpt-5-mini`              | `premium-cloud` | 0.15         | 0.60          |
+| `cerebras`   | `llama3.3-70b`            | `cheap-cloud`   | 0.85         | 1.20          |
+| `openrouter` | `openai/gpt-5-mini`       | `cheap-cloud`   | 0.15         | 0.60          |
 
 Pricing values are best-effort representative figures from the implementation date. Each preset's TSDoc cites the provider's pricing-page URL so you can verify against the live rate card.
 
@@ -79,8 +79,8 @@ Presets accept an `overrides` argument. Top-level fields use shallow merge (over
 const adapter = new OpenAICompatibleAdapter(
   presets.openai({
     apiKey: process.env.OPENAI_API_KEY!,
-    model: 'gpt-5-pro',                              // override default 'gpt-5-mini'
-    capability: { contextWindowTokens: 200_000 },    // overrides only this field
+    model: 'gpt-5-pro', // override default 'gpt-5-mini'
+    capability: { contextWindowTokens: 200_000 }, // overrides only this field
   }),
 );
 ```

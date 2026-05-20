@@ -15,17 +15,17 @@ pnpm add @tierfall/adapter-anthropic @tierfall/core
 import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
 
 const adapter = new AnthropicAdapter({
-  apiKey: process.env.ANTHROPIC_API_KEY!,    // required
-  model: 'claude-sonnet-4-7',                 // required
+  apiKey: process.env.ANTHROPIC_API_KEY!, // required
+  model: 'claude-sonnet-4-7', // required
 });
 ```
 
-| Field | Type | Required | Default | Meaning |
-|---|---|---|---|---|
-| `apiKey` | `string` | **yes** | — | Sent as `x-api-key` header. Constructor throws on missing/empty. |
-| `model` | `string` | yes | — | E.g. `'claude-sonnet-4-7'`, `'claude-opus-4-7'`. |
-| `baseUrl` | `string` | no | `'https://api.anthropic.com'` | Override for proxies. |
-| `capability` | `Partial<AdapterCapability>` | no | Sonnet 4.7 defaults | Override per instance. |
+| Field        | Type                         | Required | Default                       | Meaning                                                          |
+| ------------ | ---------------------------- | -------- | ----------------------------- | ---------------------------------------------------------------- |
+| `apiKey`     | `string`                     | **yes**  | —                             | Sent as `x-api-key` header. Constructor throws on missing/empty. |
+| `model`      | `string`                     | yes      | —                             | E.g. `'claude-sonnet-4-7'`, `'claude-opus-4-7'`.                 |
+| `baseUrl`    | `string`                     | no       | `'https://api.anthropic.com'` | Override for proxies.                                            |
+| `capability` | `Partial<AdapterCapability>` | no       | Sonnet 4.7 defaults           | Override per instance.                                           |
 
 ## Default capability
 
@@ -82,16 +82,13 @@ import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
 import { OllamaAdapter } from '@tierfall/adapter-ollama';
 
 const router = new Router(
-  new DefaultPolicy().evaluate(
-    { model: 'auto', messages: [] },
-    [
-      new AnthropicAdapter({
-        apiKey: process.env.ANTHROPIC_API_KEY!,
-        model: 'claude-sonnet-4-7',
-      }),
-      new OllamaAdapter({ model: 'llama3.2:3b' }),
-    ],
-  ),
+  new DefaultPolicy().evaluate({ model: 'auto', messages: [] }, [
+    new AnthropicAdapter({
+      apiKey: process.env.ANTHROPIC_API_KEY!,
+      model: 'claude-sonnet-4-7',
+    }),
+    new OllamaAdapter({ model: 'llama3.2:3b' }),
+  ]),
 );
 ```
 
