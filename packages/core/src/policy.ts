@@ -56,6 +56,47 @@ function passesFilters(adapter: Adapter, request: LLMRequest): boolean {
  * Default policy: filter by `request.requires` and `request.maxCostUSD`, then
  * stable-sort survivors by tier-index ascending (premium-cloud first, on-device
  * last). Result is pure — no I/O, no mutation of inputs.
+ *
+ * **Empty result.** If every adapter is filtered out, `evaluate` returns `[]`.
+ * Downstream `new Router([])` throws `"Router requires at least one adapter"` —
+ * that's the correct semantics: surface the impossible-to-satisfy request to
+ * the caller immediately instead of silently choosing wrong.
+ *
+ * **Stable sort.** `Array.prototype.sort` is stable per ES2019, and Node 24 LTS
+ * is well past that. Two adapters at the same tier preserve their input order.
+ *
+ * @example
+ * Sort by tier only (no filters):
+ * ```ts
+ * import { DefaultPolicy, Router } from '@tierfall/core';
+ *
+ * const policy = new DefaultPolicy();
+ * const ordered = policy.evaluate(request, [localAdapter, premiumAdapter, cheapAdapter]);
+ * const router = new Router(ordered);
+ * const response = await router.complete(request);
+ * // ordered === [premiumAdapter, cheapAdapter, localAdapter]
+ * ```
+ *
+ * @example
+ * Filter by capability + budget:
+ * ```ts
+ * const policy = new DefaultPolicy();
+ * const ordered = policy.evaluate(
+ *   {
+ *     model: 'auto',
+ *     messages: [{ role: 'user', content: 'Build a 200k-token report.' }],
+ *     requires: { tools: true, minContextWindowTokens: 100_000 },
+ *     maxCostUSD: 0.10,
+ *   },
+ *   allAdapters,
+ * );
+ *
+ * if (ordered.length === 0) {
+ *   throw new Error('No adapter can satisfy this request — relax the constraints.');
+ * }
+ * const router = new Router(ordered);
+ * const response = await router.complete(request);
+ * ```
  */
 export class DefaultPolicy implements Policy {
   evaluate(request: LLMRequest, adapters: readonly Adapter[]): readonly Adapter[] {
