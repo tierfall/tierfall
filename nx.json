@@ -12,9 +12,13 @@
   },
   "targetDefaults": {
     "build": { "cache": true, "inputs": ["production", "^production"], "dependsOn": ["^build"] },
-    "test": { "cache": true, "inputs": ["default", "^production"] },
-    "lint": { "cache": true, "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"] },
-    "typecheck": { "cache": true, "inputs": ["default", "^production"] }
+    "test": { "cache": true, "inputs": ["default", "^production"], "dependsOn": ["^build"] },
+    "lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
+      "dependsOn": ["^build"]
+    },
+    "typecheck": { "cache": true, "inputs": ["default", "^production"], "dependsOn": ["^build"] }
   },
   "defaultBase": "develop"
 }

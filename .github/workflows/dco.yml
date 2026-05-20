@@ -13,7 +13,9 @@ jobs:
       - name: Verify DCO sign-off on all commits
         run: |
           MERGE_BASE=$(git merge-base origin/${{ github.base_ref }} HEAD)
-          COMMITS_WITHOUT_SIGNOFF=$(git log --format='%H %s' "$MERGE_BASE..HEAD" --invert-grep --grep='^Signed-off-by:' || true)
+          # --no-merges excludes the auto-generated PR merge commit that GitHub
+          # creates for status checks; we only verify human-authored commits.
+          COMMITS_WITHOUT_SIGNOFF=$(git log --format='%H %s' "$MERGE_BASE..HEAD" --no-merges --invert-grep --grep='^Signed-off-by:' || true)
           if [ -n "$COMMITS_WITHOUT_SIGNOFF" ]; then
             echo "::error::The following commits are missing Signed-off-by:"
             echo "$COMMITS_WITHOUT_SIGNOFF"
