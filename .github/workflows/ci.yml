@@ -142,3 +142,39 @@ jobs:
       # continue-on-error until adapter implementations land and the demo is real.
       - run: pnpm run knip
         continue-on-error: true
+
+  test-integration-ollama:
+    runs-on: ubuntu-latest
+    services:
+      ollama:
+        image: ollama/ollama:0.24.0
+        ports:
+          - '11434:11434'
+        options: >-
+          --health-cmd "ollama list"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama
+      - name: Pull tiny model
+        run: |
+          CONTAINER=$(docker ps --filter "ancestor=ollama/ollama:0.24.0" --format '{{.ID}}' | head -1)
+          if [ -z "$CONTAINER" ]; then echo "Ollama container not found"; exit 1; fi
+          docker exec "$CONTAINER" ollama pull qwen2.5:0.5b
+      - name: Run integration tests
+        env:
+          TIERFALL_OLLAMA_TEST_URL: http://localhost:11434
+          TIERFALL_OLLAMA_TEST_MODEL: qwen2.5:0.5b
+        run: pnpm --filter @tierfall/adapter-ollama test:integration
+        # TODO(#16): flip continue-on-error to false once Ollama service-container stability is proven.
+        continue-on-error: true

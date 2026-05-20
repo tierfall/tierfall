@@ -4,9 +4,35 @@
   "projectType": "library",
   "sourceRoot": "packages/adapter-ollama/src",
   "targets": {
-    "build": { "executor": "nx:run-script", "options": { "script": "build" } },
-    "test": { "executor": "nx:run-script", "options": { "script": "test" } },
-    "lint": { "executor": "nx:run-script", "options": { "script": "lint" } },
-    "typecheck": { "executor": "nx:run-script", "options": { "script": "typecheck" } }
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      }
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "lint"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "typecheck"
+      }
+    },
+    "test:integration": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test:integration"
+      }
+    }
   }
 }
