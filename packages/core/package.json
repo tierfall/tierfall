@@ -1,6 +1,6 @@
 {
   "name": "@tierfall/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "TierFall core: Adapter interface, fall-never-climb router, declarative policy",
   "license": "Apache-2.0",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@tierfall/adapter-anthropic",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "TierFall premium-cloud adapter for Anthropic",
   "license": "Apache-2.0",
   "repository": {
