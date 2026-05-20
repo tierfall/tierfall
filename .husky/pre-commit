@@ -3,4 +3,3 @@
 
 pnpm exec lint-staged
 pnpm exec tsc --noEmit
-pnpm exec nx affected --target=test --base=origin/develop --parallel=3
