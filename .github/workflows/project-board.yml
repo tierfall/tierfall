@@ -1,5 +1,14 @@
 name: Project Board
 
+# Auto-update the TierFall v0.x project board (https://github.com/orgs/tierfall/projects/1)
+# when PRs that reference an issue via "Closes #N" change state:
+#   - opened / reopened / ready_for_review → linked issue's Status → "In Review"
+#   - closed + merged                       → linked issue's Status → "Done"
+#   - closed + not merged                   → linked issue's Status → "Backlog"
+#
+# If the issue isn't on the project yet, it gets added before the status update.
+# PRs with no "Closes #N" line are a graceful no-op (e.g., gitnexus refresh PR).
+
 on:
   pull_request:
     types: [opened, ready_for_review, reopened, closed]
@@ -7,25 +16,109 @@ on:
 jobs:
   move-card:
     runs-on: ubuntu-latest
+    # Project IDs captured via:
+    #   gh api graphql -f query='query { organization(login:"tierfall") { projectV2(number:1) { id, field(name:"Status") { ... on ProjectV2SingleSelectField { id options { id name } } } } } }'
+    # Stable as long as the project isn't recreated.
+    env:
+      GH_TOKEN: ${{ secrets.PROJECT_BOARD_TOKEN }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      OWNER: tierfall
+      REPO: tierfall
+      PROJECT_NUMBER: 1
+      PROJECT_ID: PVT_kwDOEPpaAs4BYPWR
+      STATUS_FIELD_ID: PVTSSF_lADOEPpaAs4BYPWRzhTWlUM
+      STATUS_BACKLOG: a929ec69
+      STATUS_IN_REVIEW: 8e13b692
+      STATUS_DONE: '072c6752'
     steps:
-      - name: Move card on PR open
-        if: github.event.action == 'opened' || github.event.action == 'ready_for_review' || github.event.action == 'reopened'
-        env:
-          GH_TOKEN: ${{ secrets.PROJECT_BOARD_TOKEN }}
-          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: Determine target status
+        id: target
         run: |
-          ISSUE_NUM=$(echo "$PR_BODY" | grep -oE '[Cc]loses #[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
-          if [ -z "$ISSUE_NUM" ]; then echo "No linked issue; skipping board move."; exit 0; fi
-          # TODO(#16): replace this echo stub with real ProjectV2 GraphQL mutation.
-          echo "Would move issue #$ISSUE_NUM to In Review"
+          ACTION='${{ github.event.action }}'
+          MERGED='${{ github.event.pull_request.merged }}'
+          case "$ACTION" in
+            opened|reopened|ready_for_review)
+              echo "id=$STATUS_IN_REVIEW" >> "$GITHUB_OUTPUT"
+              echo "name=In Review" >> "$GITHUB_OUTPUT"
+              ;;
+            closed)
+              if [ "$MERGED" = "true" ]; then
+                echo "id=$STATUS_DONE" >> "$GITHUB_OUTPUT"
+                echo "name=Done" >> "$GITHUB_OUTPUT"
+              else
+                echo "id=$STATUS_BACKLOG" >> "$GITHUB_OUTPUT"
+                echo "name=Backlog" >> "$GITHUB_OUTPUT"
+              fi
+              ;;
+            *)
+              echo "Unhandled action: $ACTION; nothing to do."
+              echo "id=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
-      - name: Move card on PR merge
-        if: github.event.action == 'closed' && github.event.pull_request.merged == true
-        env:
-          GH_TOKEN: ${{ secrets.PROJECT_BOARD_TOKEN }}
-          PR_BODY: ${{ github.event.pull_request.body }}
+      - name: Parse linked issue from PR body
+        id: issue
         run: |
-          ISSUE_NUM=$(echo "$PR_BODY" | grep -oE '[Cc]loses #[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
-          if [ -z "$ISSUE_NUM" ]; then echo "No linked issue; skipping board move."; exit 0; fi
-          # TODO(#16): replace this echo stub with real ProjectV2 GraphQL mutation.
-          echo "Would move issue #$ISSUE_NUM to Done"
+          NUM=$(printf '%s\n' "$PR_BODY" | grep -oE '[Cc]loses #[0-9]+' | head -1 | grep -oE '[0-9]+' || true)
+          if [ -z "$NUM" ]; then
+            echo "No 'Closes #N' line in PR body; nothing to move."
+          fi
+          echo "num=$NUM" >> "$GITHUB_OUTPUT"
+
+      - name: Move card
+        if: steps.issue.outputs.num != '' && steps.target.outputs.id != ''
+        run: |
+          set -euo pipefail
+          ISSUE_NUM='${{ steps.issue.outputs.num }}'
+          STATUS_ID='${{ steps.target.outputs.id }}'
+          STATUS_NAME='${{ steps.target.outputs.name }}'
+
+          ISSUE_NID=$(gh api "repos/$OWNER/$REPO/issues/$ISSUE_NUM" --jq '.node_id')
+
+          # Look for an existing item on the project. Paginates one page (100 items);
+          # if the board ever exceeds that, expand to a cursor loop here.
+          ITEM_ID=$(gh api graphql \
+            -f query='
+              query($org: String!, $proj: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $proj) {
+                    items(first: 100) {
+                      nodes {
+                        id
+                        content { ... on Issue { id } }
+                      }
+                    }
+                  }
+                }
+              }' \
+            -F org="$OWNER" -F proj="$PROJECT_NUMBER" \
+            --jq ".data.organization.projectV2.items.nodes[] | select(.content != null and .content.id == \"$ISSUE_NID\") | .id" \
+            | head -1)
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "Issue #$ISSUE_NUM not on board yet; adding."
+            ITEM_ID=$(gh api graphql \
+              -f query='
+                mutation($proj: ID!, $content: ID!) {
+                  addProjectV2ItemById(input: { projectId: $proj, contentId: $content }) {
+                    item { id }
+                  }
+                }' \
+              -F proj="$PROJECT_ID" -F content="$ISSUE_NID" \
+              --jq '.data.addProjectV2ItemById.item.id')
+          fi
+
+          gh api graphql \
+            -f query='
+              mutation($proj: ID!, $item: ID!, $field: ID!, $opt: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $proj, itemId: $item, fieldId: $field,
+                  value: { singleSelectOptionId: $opt }
+                }) {
+                  clientMutationId
+                }
+              }' \
+            -F proj="$PROJECT_ID" -F item="$ITEM_ID" -F field="$STATUS_FIELD_ID" -F opt="$STATUS_ID" \
+            --silent
+
+          echo "Moved issue #$ISSUE_NUM to '$STATUS_NAME'."
