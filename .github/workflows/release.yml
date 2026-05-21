@@ -26,8 +26,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          MERGED_PR=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" --jq '.[0]')
-          HEAD_REF=$(echo "$MERGED_PR" | jq -r .head.ref)
+          # /commits/{sha}/pulls is eventually consistent — when this workflow
+          # fires on push-to-main immediately after a merge, the PR association
+          # is sometimes not yet indexed and the API returns an empty array.
+          # Retry with backoff (~5/10/20/30s = up to ~65s of waiting) before
+          # treating it as a real "no associated PR" failure.
+          HEAD_REF=""
+          for attempt in 1 2 3 4; do
+            HEAD_REF=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+              --jq '.[0].head.ref // empty')
+            if [ -n "$HEAD_REF" ]; then
+              break
+            fi
+            wait=$((attempt * 5 + 5))
+            echo "Attempt $attempt: PR association not yet indexed; sleeping ${wait}s."
+            sleep "$wait"
+          done
+          if [ -z "$HEAD_REF" ]; then
+            echo "::error::Release workflow could not resolve a PR for ${{ github.sha }} after retries; aborting."
+            exit 1
+          fi
           if [ "$HEAD_REF" != "develop" ]; then
             echo "::error::Release workflow expects merges from develop only, got: $HEAD_REF"
             exit 1
