@@ -275,7 +275,7 @@ const readmeMd = `# @tierfall/adapter-${name}
 ## Install
 
 \`\`\`bash
-pnpm add @tierfall/core @tierfall/adapter-${name}
+npm install @tierfall/core @tierfall/adapter-${name}
 \`\`\`
 
 ## Usage

@@ -92,7 +92,7 @@ export default function HomePage(): ReactNode {
       <section className="tf-install">
         <h2 className="tf-section-title">Install</h2>
         <pre className="tf-install-snippet">
-          <code>{`pnpm add @tierfall/core @tierfall/adapter-openai-compatible`}</code>
+          <code>{`npm install @tierfall/core @tierfall/adapter-openai-compatible`}</code>
         </pre>
         <p className="tf-install-note">
           Released under <strong>Apache-2.0</strong>. v0.1.0 is the first public release —{' '}

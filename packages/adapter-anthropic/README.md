@@ -6,7 +6,7 @@ Premium-cloud [TierFall](https://github.com/tierfall/tierfall) adapter for
 ## Install
 
 ```bash
-pnpm add @tierfall/core @tierfall/adapter-anthropic
+npm install @tierfall/core @tierfall/adapter-anthropic
 ```
 
 ## Usage
