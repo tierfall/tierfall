@@ -20,7 +20,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm dlx gitnexus analyze
       - name: Open PR if diff
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'chore(docs): refresh AGENTS.md'
           title: 'chore(docs): refresh AGENTS.md'
