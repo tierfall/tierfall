@@ -5,7 +5,7 @@ The core router, Adapter interface, and types for [TierFall](https://github.com/
 ## Install
 
 ```bash
-pnpm add @tierfall/core
+npm install @tierfall/core
 ```
 
 ## Usage

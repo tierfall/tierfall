@@ -5,7 +5,7 @@ On-device [TierFall](https://github.com/tierfall/tierfall) adapter for [Ollama](
 ## Install
 
 ```bash
-pnpm add @tierfall/core @tierfall/adapter-ollama
+npm install @tierfall/core @tierfall/adapter-ollama
 ```
 
 ## Usage
