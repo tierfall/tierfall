@@ -1,6 +1,6 @@
-import { Router, DefaultPolicy, type LLMRequest } from '@tierfall/core';
+import { DefaultPolicy, Router, type LLMRequest } from '@tierfall/core';
+import { printFailure, printScenarioHeader, printSuccess } from '../banner.js';
 import { tierOrderedChain, type AvailableAdapters } from '../build-adapters.js';
-import { printScenarioHeader, printSuccess, printFailure } from '../banner.js';
 
 /**
  * Scenario 1: basic chat (happy path).

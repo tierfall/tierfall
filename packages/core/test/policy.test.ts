@@ -1,5 +1,5 @@
-import { DefaultPolicy } from '../src/policy.js';
 import type { LLMRequest } from '../src/index.js';
+import { DefaultPolicy } from '../src/policy.js';
 import { fakeAdapter } from './helpers/adapters.js';
 
 const baseRequest: LLMRequest = {

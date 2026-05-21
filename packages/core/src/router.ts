@@ -1,11 +1,11 @@
 import type { Adapter } from './adapter.js';
-import type { FallDiagnostic, LLMRequest, LLMResponse } from './types.js';
 import {
   BudgetExceededError,
   CapabilityMismatchError,
   NoTierAvailableError,
   ProviderUnavailableError,
 } from './errors.js';
+import type { FallDiagnostic, LLMRequest, LLMResponse } from './types.js';
 
 /**
  * Maps a caught error to the corresponding `FallDiagnostic.reason`.

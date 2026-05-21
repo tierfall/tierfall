@@ -51,6 +51,36 @@ console.log('Fall chain:', response.fallChain);
 > tracked as v0.1 backlog issues — follow the [project board](https://github.com/orgs/tierfall/projects)
 > for progress. Tests for unimplemented behavior are red on purpose (TDD).
 
+## Rotate across adapters
+
+TierFall has no preferred vendor — the same `LLMRequest` runs unchanged against any adapter,
+without a Router in the loop. The snippet below sends one message to each of the three adapters
+individually so you can see the responses side by side.
+
+```ts
+import type { LLMRequest } from '@tierfall/core';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+import { presets } from '@tierfall/adapter-openai-compatible/presets';
+import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
+
+const request: LLMRequest = {
+  messages: [{ role: 'user', content: 'Summarize the four-tier model in one sentence.' }],
+};
+
+// TierFall has no preferred vendor — these are equivalent.
+const adapters = [
+  new OllamaAdapter({ baseUrl: 'http://localhost:11434', model: 'llama3.2:3b' }),
+  new OpenAICompatibleAdapter(presets.groq({ apiKey: process.env.GROQ_API_KEY! })),
+  new AnthropicAdapter({ apiKey: process.env.ANTHROPIC_API_KEY!, model: 'claude-sonnet-4-7' }),
+];
+
+for (const adapter of adapters) {
+  const response = await adapter.complete(request);
+  console.log(`${adapter.constructor.name}: ${response.text}`);
+}
+```
+
 ## Try the demo
 
 ```bash

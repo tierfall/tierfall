@@ -1,10 +1,10 @@
-import { Router } from '../src/router.js';
 import {
   BudgetExceededError,
   CapabilityMismatchError,
   NoTierAvailableError,
   ProviderUnavailableError,
 } from '../src/errors.js';
+import { Router } from '../src/router.js';
 import { fakeAdapter, throwingAdapter } from './helpers/adapters.js';
 
 describe('Router (closes #2)', () => {

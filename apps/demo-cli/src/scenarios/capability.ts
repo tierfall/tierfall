@@ -1,6 +1,6 @@
-import { Router, NoTierAvailableError, type LLMRequest } from '@tierfall/core';
+import { NoTierAvailableError, Router, type LLMRequest } from '@tierfall/core';
+import { printExpectedThrow, printFailure, printScenarioHeader } from '../banner.js';
 import { type AvailableAdapters } from '../build-adapters.js';
-import { printScenarioHeader, printExpectedThrow, printFailure } from '../banner.js';
 
 /**
  * Scenario 3: capability mismatch (force-isolate to local).

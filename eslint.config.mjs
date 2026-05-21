@@ -1,8 +1,8 @@
 // @ts-check
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import eslintComments from '@eslint-community/eslint-plugin-eslint-comments/configs';
+import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   // Global ignores (must be its own config block).
