@@ -3,3 +3,300 @@
  * fumadocs-ui ships a pre-compiled style.css that's imported in app/layout.tsx.
  * App-specific overrides go here.
  */
+
+.tf-landing {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding: 4rem 1.5rem 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+}
+
+.tf-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 960px) {
+  .tf-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 3.5rem;
+  }
+}
+
+.tf-hero-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.tf-brandmark {
+  width: 4rem;
+  height: 4rem;
+}
+
+.tf-brandmark-tier { fill: #0F172A; }
+.tf-brandmark-fall { fill: #F59E0B; }
+
+@media (prefers-color-scheme: dark) {
+  .tf-brandmark-tier { fill: #F8FAFC; }
+}
+
+.tf-title {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 0;
+}
+
+.tf-tagline {
+  font-size: 1.25rem;
+  color: var(--color-fd-muted-foreground);
+  margin: 0;
+}
+
+.tf-motto {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #F59E0B;
+  margin: 0;
+}
+
+.tf-cta {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.tf-cta-primary,
+.tf-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 80ms ease;
+}
+
+.tf-cta-primary {
+  background: #0F172A;
+  color: #F8FAFC;
+}
+
+.tf-cta-secondary {
+  background: transparent;
+  color: var(--color-fd-foreground);
+  border: 1px solid var(--color-fd-border);
+}
+
+.tf-cta-primary:hover,
+.tf-cta-secondary:hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tf-cta-primary {
+    background: #F8FAFC;
+    color: #0F172A;
+  }
+}
+
+.tf-codeblock-frame {
+  background: #0B1220;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.tf-codeblock-bar {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tf-codeblock-bar span {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.tf-codeblock {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  color: #E2E8F0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+.tf-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 1.5rem;
+}
+
+.tf-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.tf-value-card {
+  padding: 1.25rem 1.25rem 1rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  background: var(--color-fd-card);
+}
+
+.tf-value-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--color-fd-foreground);
+}
+
+.tf-value-card p {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-fd-muted-foreground);
+  margin: 0;
+}
+
+.tf-ladder-track {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+@media (min-width: 720px) {
+  .tf-ladder-track {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+  }
+}
+
+.tf-tier {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.5rem;
+  background: var(--color-fd-card);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+  min-width: 0;
+}
+
+.tf-tier-landing {
+  border-color: #F59E0B;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.tf-tier-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-fd-foreground);
+}
+
+.tf-tier-sub {
+  font-size: 0.75rem;
+  color: var(--color-fd-muted-foreground);
+}
+
+.tf-fall-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F59E0B;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex: 0 0 1.5rem;
+  padding: 0.25rem 0;
+}
+
+@media (min-width: 720px) {
+  .tf-fall-arrow {
+    flex: 0 0 2rem;
+  }
+  .tf-fall-arrow::before {
+    content: "→";
+  }
+  .tf-fall-arrow {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 719px) {
+  .tf-fall-arrow {
+    font-size: 1.5rem;
+  }
+}
+
+/* mobile arrow shows ↓; desktop overrides to → via ::before. Hide the inline ↓
+   on desktop so we don't render both. */
+@media (min-width: 720px) {
+  .tf-fall-arrow {
+    color: transparent;
+  }
+  .tf-fall-arrow::before {
+    color: #F59E0B;
+  }
+}
+
+.tf-ladder-caption {
+  margin: 1.25rem 0 0;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.tf-ladder-caption code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.82rem;
+  background: var(--color-fd-muted);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  color: var(--color-fd-foreground);
+}
+
+.tf-install-snippet {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  background: #0B1220;
+  color: #E2E8F0;
+  border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+}
+
+.tf-install-note {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-fd-muted-foreground);
+}
+
+.tf-link {
+  color: var(--color-fd-foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

@@ -48,5 +48,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "homepage": "https://tierfall.github.io/tierfall"
 }
