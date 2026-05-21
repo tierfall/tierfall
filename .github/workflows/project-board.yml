@@ -73,6 +73,16 @@ jobs:
           STATUS_ID='${{ steps.target.outputs.id }}'
           STATUS_NAME='${{ steps.target.outputs.name }}'
 
+          # Graceful degrade: PROJECT_BOARD_TOKEN is optional. Without it the
+          # workflow logs a warning and exits successfully — board automation
+          # is a nice-to-have, not a CI gate.
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::PROJECT_BOARD_TOKEN secret not set; cannot move issue #$ISSUE_NUM to '$STATUS_NAME'."
+            echo "To enable board automation, create a PAT with 'Projects: Read+Write' scope"
+            echo "and add it as the PROJECT_BOARD_TOKEN repository secret."
+            exit 0
+          fi
+
           ISSUE_NID=$(gh api "repos/$OWNER/$REPO/issues/$ISSUE_NUM" --jq '.node_id')
 
           # Look for an existing item on the project. Paginates one page (100 items);
