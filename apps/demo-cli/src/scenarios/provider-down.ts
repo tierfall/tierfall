@@ -1,12 +1,12 @@
 import {
+  NoTierAvailableError,
   ProviderUnavailableError,
   Router,
-  NoTierAvailableError,
   type Adapter,
   type LLMRequest,
 } from '@tierfall/core';
+import { printExpectedThrow, printFailure, printScenarioHeader, printSuccess } from '../banner.js';
 import { tierOrderedChain, type AvailableAdapters } from '../build-adapters.js';
-import { printScenarioHeader, printSuccess, printExpectedThrow, printFailure } from '../banner.js';
 
 /**
  * Wrap an adapter so its `complete` always rejects with ProviderUnavailableError.
