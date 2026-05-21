@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="TierFall">
+  <style>
+    .tier { fill: #0F172A; }
+    .fall { fill: #F59E0B; }
+    @media (prefers-color-scheme: dark) {
+      .tier { fill: #F8FAFC; }
+    }
+  </style>
+  <rect class="tier" x="4" y="3"  width="16" height="2" rx="1"/>
+  <rect class="tier" x="4" y="8"  width="16" height="2" rx="1"/>
+  <rect class="tier" x="4" y="13" width="16" height="2" rx="1"/>
+  <rect class="tier" x="4" y="18" width="16" height="2" rx="1"/>
+  <rect class="fall" x="11" y="1" width="2"  height="20" rx="1"/>
+  <path class="fall" d="M8 21 L16 21 L12 24 Z"/>
+</svg>
