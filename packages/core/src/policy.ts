@@ -6,6 +6,24 @@ import type { LLMRequest } from './types.js';
 /**
  * Declarative policy evaluator: matches a request against available adapters
  * and produces the ordered fallback sequence the Router will attempt.
+ *
+ * Implement this to plug in custom routing logic — for instance, sticky
+ * sessions, A/B sampling, or per-region adapter selection. The default
+ * implementation is {@link DefaultPolicy}.
+ *
+ * @example
+ * A toy policy that always tries on-device first:
+ * ```ts
+ * import type { Policy, Adapter, LLMRequest } from '@tierfall/core';
+ *
+ * const localFirst: Policy = {
+ *   evaluate(_request: LLMRequest, adapters: readonly Adapter[]): readonly Adapter[] {
+ *     return [...adapters].sort((a, b) =>
+ *       a.tier === 'on-device' ? -1 : b.tier === 'on-device' ? 1 : 0,
+ *     );
+ *   },
+ * };
+ * ```
  */
 export interface Policy {
   evaluate(request: LLMRequest, adapters: readonly Adapter[]): readonly Adapter[];
