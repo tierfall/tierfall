@@ -6,7 +6,7 @@ Chat Completions endpoint (Groq, DeepSeek, OpenAI, Cerebras, OpenRouter, vLLM, .
 ## Install
 
 ```bash
-pnpm add @tierfall/core @tierfall/adapter-openai-compatible
+npm install @tierfall/core @tierfall/adapter-openai-compatible
 ```
 
 ## Usage

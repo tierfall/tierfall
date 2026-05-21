@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The public documentation site for TierFall, hosted at `tierfall.github.io/tierfall` (custom domain pending).
+The public documentation site for TierFall, hosted at `tierfall.github.io/tierfall`. No custom domain is planned for v0.1; the GitHub Pages URL is the canonical one.
 Built with [Fumadocs](https://fumadocs.dev) on Next.js 16 / React 19. Lives
 outside the published packages — exists to give readers a single canonical
 place for the project's concepts, adapter guides, and migration notes.
