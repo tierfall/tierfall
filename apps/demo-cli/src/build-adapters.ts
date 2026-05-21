@@ -1,8 +1,8 @@
-import type { Adapter } from '@tierfall/core';
 import { AnthropicAdapter } from '@tierfall/adapter-anthropic';
 import { OllamaAdapter } from '@tierfall/adapter-ollama';
 import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
 import { presets } from '@tierfall/adapter-openai-compatible/presets';
+import type { Adapter } from '@tierfall/core';
 import type { AdapterStatus } from './banner.js';
 
 export interface AvailableAdapters {

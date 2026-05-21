@@ -1,5 +1,5 @@
+import { printRunSummary, printTopBanner } from './banner.js';
 import { buildAdapters } from './build-adapters.js';
-import { printTopBanner, printRunSummary } from './banner.js';
 import { runBasicScenario } from './scenarios/basic.js';
 import { runBudgetFallScenario } from './scenarios/budget-fall.js';
 import { runCapabilityScenario } from './scenarios/capability.js';
