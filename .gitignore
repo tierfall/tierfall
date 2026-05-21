@@ -9,3 +9,22 @@ coverage/
 .env
 .env.local
 .DS_Store
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Jest
+.jest-cache/
+
+# Generated
+*.tgz
+
+# Fumadocs (generated content/page index)
+apps/docs/.source/
+
+# Claude Code runtime worktrees (per-agent ephemeral checkouts)
+.claude/worktrees/
+
+# gitnexus local index database
+.gitnexus/

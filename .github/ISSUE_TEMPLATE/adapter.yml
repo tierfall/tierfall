@@ -1,0 +1,18 @@
+name: New adapter proposal
+description: Propose a new vendor adapter package
+labels: ['type:feature', 'area:adapter', 'needs-design']
+body:
+  - type: input
+    id: vendor
+    attributes: { label: 'Vendor name' }
+    validations: { required: true }
+  - type: dropdown
+    id: tier
+    attributes:
+      label: 'Default tier'
+      options: ['on-device', 'self-hosted-edge', 'cheap-cloud', 'premium-cloud']
+    validations: { required: true }
+  - type: textarea
+    id: api-shape
+    attributes: { label: 'API shape — is this OpenAI-compatible, or distinct?' }
+    validations: { required: true }

@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '24.15.0'
+  PNPM_VERSION: '10.33.0'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Build core + adapters so their dist/ exists when typescript-eslint's
+      # projectService resolves @tierfall/core types from dependent packages.
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama,adapter-openai-compatible,adapter-anthropic
+      - run: pnpm exec eslint --max-warnings=0 .
+      - run: pnpm exec prettier --check .
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # nx.json's typecheck targetDefault declares dependsOn: ['^build'],
+      # so this run-many builds upstream packages first automatically.
+      - run: pnpm exec nx run-many --target=typecheck --parallel=3
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=test --projects=core --parallel=3
+
+  test-rest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=test --exclude=core --parallel=3
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --parallel=3
+
+  publint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama,adapter-openai-compatible,adapter-anthropic
+      - run: pnpm run publint
+
+  attw:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama,adapter-openai-compatible,adapter-anthropic
+      # TODO(#16): attw 0.18.2 crashes on packages/core's dts emission — likely a
+      # transitive typescript@5.6.1-rc bug in @arethetypeswrong/core. continue-on-error
+      # until either attw upstream fixes it or we pin a non-pre-release transitive.
+      - run: pnpm run attw
+        continue-on-error: true
+
+  knip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # TODO(#16): the v0.1 scaffold has legitimate "unused" deps (root tooling used
+      # via scripts; demo's @tierfall/* deps used only after issue #9 wires scenarios).
+      # continue-on-error until adapter implementations land and the demo is real.
+      - run: pnpm run knip
+        continue-on-error: true
+
+  test-integration-ollama:
+    runs-on: ubuntu-latest
+    services:
+      ollama:
+        image: ollama/ollama:0.24.0
+        ports:
+          - '11434:11434'
+        options: >-
+          --health-cmd "ollama list"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ env.NODE_VERSION }}'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many --target=build --projects=core,adapter-ollama
+      - name: Pull tiny model
+        run: |
+          CONTAINER=$(docker ps --filter "ancestor=ollama/ollama:0.24.0" --format '{{.ID}}' | head -1)
+          if [ -z "$CONTAINER" ]; then echo "Ollama container not found"; exit 1; fi
+          docker exec "$CONTAINER" ollama pull qwen2.5:0.5b
+      - name: Run integration tests
+        env:
+          TIERFALL_OLLAMA_TEST_URL: http://localhost:11434
+          TIERFALL_OLLAMA_TEST_MODEL: qwen2.5:0.5b
+        run: pnpm --filter @tierfall/adapter-ollama test:integration
+        # TODO(#16): flip continue-on-error to false once Ollama service-container stability is proven.
+        continue-on-error: true

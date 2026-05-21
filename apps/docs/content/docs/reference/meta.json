@@ -1,0 +1,4 @@
+{
+  "title": "Reference",
+  "pages": ["adapter", "adapter-ollama", "adapter-openai-compatible", "adapter-anthropic"]
+}

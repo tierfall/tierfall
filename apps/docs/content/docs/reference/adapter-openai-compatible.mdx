@@ -1,0 +1,101 @@
+---
+title: '@tierfall/adapter-openai-compatible'
+description: Adapter for any vendor speaking the OpenAI Chat Completions wire format. Five blessed presets included.
+---
+
+## Install
+
+```bash
+pnpm add @tierfall/adapter-openai-compatible @tierfall/core
+```
+
+## What is "OpenAI-compatible"?
+
+A growing list of providers serve the OpenAI Chat Completions API shape (`POST /v1/chat/completions`) under their own URLs: OpenAI itself, Groq, DeepSeek, Cerebras, OpenRouter, vLLM gateways, LM Studio, plus most self-hosted inference servers. One adapter package speaks all of them — pointed at different base URLs.
+
+## Configure
+
+```ts
+import { OpenAICompatibleAdapter } from '@tierfall/adapter-openai-compatible';
+
+const adapter = new OpenAICompatibleAdapter({
+  apiKey: process.env.GROQ_API_KEY!, // required
+  model: 'llama-3.3-70b-versatile', // required
+  baseUrl: 'https://api.groq.com/openai/v1', // default https://api.openai.com/v1
+  tier: 'cheap-cloud', // default 'cheap-cloud'
+});
+```
+
+| Field        | Type                         | Required | Default                       | Meaning                                                                                  |
+| ------------ | ---------------------------- | -------- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| `apiKey`     | `string`                     | **yes**  | —                             | Sent as `Authorization: Bearer <key>`. The constructor throws on missing/empty.          |
+| `model`      | `string`                     | yes      | —                             | Provider-specific. For OpenRouter, use `provider/model` slug format.                     |
+| `baseUrl`    | `string`                     | no       | `'https://api.openai.com/v1'` | Should include the `/v1` segment; adapter appends `/chat/completions`.                   |
+| `tier`       | `Tier`                       | no       | `'cheap-cloud'`               | Override per provider. OpenAI itself is `'premium-cloud'`; vLLM is `'self-hosted-edge'`. |
+| `capability` | `Partial<AdapterCapability>` | no       | conservative defaults         | Override individual capability fields.                                                   |
+
+## Default capability
+
+```ts
+{
+  contextWindowTokens: 32_768,
+  supportsTools: false,
+  supportsStreaming: false,
+  supportsStructuredOutput: false,
+  costPerMillionInputTokens: 0,
+  costPerMillionOutputTokens: 0,
+}
+```
+
+Cost defaults are `0` because the generic adapter has no per-provider knowledge — for accurate budget enforcement, use a [preset](#presets) (which populates real numbers) or override `capability.costPerMillion*` at construction.
+
+## Presets
+
+The `presets` sub-export bundles base URL, default model, tier, and realistic per-provider pricing for five common providers:
+
+```ts
+import { presets } from '@tierfall/adapter-openai-compatible/presets';
+
+const adapter = new OpenAICompatibleAdapter(
+  presets.deepseek({ apiKey: process.env.DEEPSEEK_API_KEY! }),
+);
+```
+
+| Preset       | Default model             | Tier            | $/MTok input | $/MTok output |
+| ------------ | ------------------------- | --------------- | ------------ | ------------- |
+| `groq`       | `llama-3.3-70b-versatile` | `cheap-cloud`   | 0.59         | 0.79          |
+| `deepseek`   | `deepseek-chat`           | `cheap-cloud`   | 0.27         | 1.10          |
+| `openai`     | `gpt-5-mini`              | `premium-cloud` | 0.15         | 0.60          |
+| `cerebras`   | `llama3.3-70b`            | `cheap-cloud`   | 0.85         | 1.20          |
+| `openrouter` | `openai/gpt-5-mini`       | `cheap-cloud`   | 0.15         | 0.60          |
+
+Pricing values are best-effort representative figures from the implementation date. Each preset's TSDoc cites the provider's pricing-page URL so you can verify against the live rate card.
+
+## Override semantics
+
+Presets accept an `overrides` argument. Top-level fields use shallow merge (override wins); `capability` deep-merges one level so unspecified capability fields are preserved.
+
+```ts
+const adapter = new OpenAICompatibleAdapter(
+  presets.openai({
+    apiKey: process.env.OPENAI_API_KEY!,
+    model: 'gpt-5-pro', // override default 'gpt-5-mini'
+    capability: { contextWindowTokens: 200_000 }, // overrides only this field
+  }),
+);
+```
+
+## Gotchas
+
+- **`content === null` coalesces to empty string.** Some providers return `null` content when `finish_reason === 'tool_calls'`. The adapter coalesces to `''` so `LLMResponse.text` is always a string.
+- **System messages stay in `messages[]`.** Unlike Anthropic, OpenAI Chat Completions accepts `role: 'system'` natively. The adapter passes the request's `messages` through verbatim.
+- **429 maps to `BudgetExceededError`**, not `ProviderUnavailableError`. Rate limits and quota errors are budget signals — falling to a cheaper tier is correct.
+- **Tool calling / streaming / structured output** are all `false` in v0.1. `requires.tools === true` is rejected pre-HTTP with `CapabilityMismatchError`.
+- **No `openai` SDK dependency.** Built-in `fetch` only.
+- **Timeout is fixed at 30 seconds.**
+
+## Read next
+
+- [Adapter interface](/docs/reference/adapter)
+- [The four tiers](/docs/concepts/tiers) — note tier is per-instance for this adapter
+- [@tierfall/adapter-anthropic](/docs/reference/adapter-anthropic) — when Anthropic's API shape matters

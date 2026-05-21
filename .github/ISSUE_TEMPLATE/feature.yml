@@ -1,0 +1,14 @@
+name: Feature request
+description: Propose new behavior
+labels: ['type:feature', 'needs-design']
+body:
+  - type: textarea
+    id: motivation
+    attributes: { label: 'Why' }
+    validations: { required: true }
+  - type: textarea
+    id: shape
+    attributes: { label: 'Proposed shape (API sketch ok)' }
+  - type: input
+    id: milestone
+    attributes: { label: 'Target milestone' }

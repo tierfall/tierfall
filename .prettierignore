@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+.nx
+.next
+.turbo
+pnpm-lock.yaml
+*.tsbuildinfo
+apps/docs/.source
+apps/docs/next-env.d.ts
+CHANGELOG.md

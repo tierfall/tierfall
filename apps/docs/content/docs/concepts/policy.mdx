@@ -1,0 +1,89 @@
+---
+title: Policy
+description: How DefaultPolicy filters and sorts adapters before the router sees them.
+---
+
+## What the policy does
+
+`DefaultPolicy.evaluate(request, adapters)` is a pure function: it filters adapters that can't satisfy the request, then sorts the survivors by tier-index ascending (premium first, on-device last). The result is what you pass to `new Router(...)`.
+
+```ts
+import { DefaultPolicy, Router } from '@tierfall/core';
+
+const policy = new DefaultPolicy();
+const ordered = policy.evaluate(request, allAdapters);
+const router = new Router(ordered);
+const response = await router.complete(request);
+```
+
+In v0.1 you call the policy manually. A future version can introduce `new Router(adapters, policy)` ergonomics; the standalone shape is intentional for now.
+
+## Filters
+
+An adapter must pass _every_ active filter to survive. Filters combine with AND:
+
+| Request field                        | Excludes adapter when...                                       |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `requires.minContextWindowTokens: N` | `capability.contextWindowTokens < N` (strict `<`)              |
+| `requires.tools: true`               | `capability.supportsTools === false`                           |
+| `requires.streaming: true`           | `capability.supportsStreaming === false`                       |
+| `requires.structuredOutput: true`    | `capability.supportsStructuredOutput === false`                |
+| `maxCostUSD: C`                      | `estimateCost(capability) > C` (strict `>`; equality survives) |
+
+A `requires` field that's `undefined`, `false`, or absent doesn't filter anything — only the active triggers above apply.
+
+## Cost estimation
+
+`maxCostUSD` is checked against a fixed 500 input + 500 output token budget in v0.1:
+
+```ts
+function estimateCost(cap: AdapterCapability): number {
+  const inputCost = ((cap.costPerMillionInputTokens ?? 0) / 1_000_000) * 500;
+  const outputCost = ((cap.costPerMillionOutputTokens ?? 0) / 1_000_000) * 500;
+  return inputCost + outputCost;
+}
+```
+
+This is a deliberate simplification. A future version can introduce per-request tokenizer-based estimation. `null` costs (typically `on-device`) map to `0`.
+
+The comparison is strict greater-than — an adapter whose estimated cost equals the cap _survives_. That's locked in by tests; it's the kind of edge case that's easy to flip during a refactor.
+
+## Sort
+
+The survivors are stable-sorted by `TIERS.indexOf(adapter.tier)` ascending:
+
+```ts
+[...survivors].sort((a, b) => TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier));
+```
+
+Stable sort is part of the ES2019 spec; the result preserves input order within a tier. Two `premium-cloud` adapters in the input list will appear in that same order in the result. Useful when you've configured (say) Anthropic as your primary and OpenAI as a backup at the same tier — Anthropic's input order makes it first.
+
+## Empty result
+
+If every adapter is filtered out, `evaluate` returns `[]`. The downstream `new Router([])` throws `"Router requires at least one adapter"` — that's the right semantics: surface impossible-to-satisfy requests to the caller immediately, instead of silently choosing wrong.
+
+```ts
+const ordered = policy.evaluate(request, adapters);
+if (ordered.length === 0) {
+  throw new Error('No adapter can satisfy this request — relax the constraints.');
+}
+const router = new Router(ordered);
+```
+
+## Authoring your own policy
+
+`DefaultPolicy` implements the `Policy` interface:
+
+```ts
+interface Policy {
+  evaluate(request: LLMRequest, adapters: readonly Adapter[]): readonly Adapter[];
+}
+```
+
+Any implementation that takes a request + adapter list and returns an ordered subset is a valid policy. Custom policies might consider request volume, geographic affinity, or runtime health metrics. v0.1 ships only `DefaultPolicy` because the basic filter+sort covers the common case.
+
+## Read next
+
+- [The four tiers](/docs/concepts/tiers)
+- [Fall, never climb](/docs/concepts/fall-never-climb)
+- [Budget-aware routing](/docs/recipes/budget-aware-routing) — policy in action

@@ -1,0 +1,25 @@
+{
+  "name": "@tierfall-app/demo-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/main.ts",
+    "start": "node dist/main.cjs",
+    "lint": "eslint --max-warnings=0 --quiet src",
+    "typecheck": "tsc --noEmit --pretty false"
+  },
+  "dependencies": {
+    "@tierfall/core": "workspace:*",
+    "@tierfall/adapter-ollama": "workspace:*",
+    "@tierfall/adapter-openai-compatible": "workspace:*",
+    "@tierfall/adapter-anthropic": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.1",
+    "tsup": "8.5.1",
+    "tsx": "4.22.3",
+    "typescript": "6.0.3"
+  }
+}

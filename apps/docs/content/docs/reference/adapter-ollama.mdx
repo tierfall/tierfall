@@ -1,0 +1,76 @@
+---
+title: '@tierfall/adapter-ollama'
+description: On-device tier adapter targeting a local Ollama daemon.
+---
+
+## Install
+
+```bash
+pnpm add @tierfall/adapter-ollama @tierfall/core
+```
+
+## Configure
+
+```ts
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const adapter = new OllamaAdapter({
+  baseUrl: 'http://localhost:11434', // default; override for non-localhost daemons
+  model: 'llama3.2:3b', // required
+});
+```
+
+| Field        | Type                         | Required | Default                    | Meaning                                                                                                |
+| ------------ | ---------------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `baseUrl`    | `string`                     | no       | `'http://localhost:11434'` | The Ollama daemon URL. Trailing slash is normalized.                                                   |
+| `apiKey`     | `string`                     | no       | —                          | Accepted for cloud-adapter parity, **ignored**. Ollama doesn't authenticate.                           |
+| `model`      | `string`                     | yes      | —                          | E.g. `'llama3.2:3b'`. The model must be pulled (`ollama pull <model>`) before the daemon can serve it. |
+| `capability` | `Partial<AdapterCapability>` | no       | sensible defaults below    | Override individual capability fields per instance.                                                    |
+
+## Default capability
+
+```ts
+{
+  contextWindowTokens: 8192,
+  supportsTools: false,
+  supportsStreaming: true,
+  supportsStructuredOutput: false,
+  costPerMillionInputTokens: null,
+  costPerMillionOutputTokens: null,
+}
+```
+
+`null` cost means free — `DefaultPolicy.estimateCost` treats it as `0`. The defaults match typical local-quantized 3B-class models; override `contextWindowTokens` if you're using a longer-context model. `supportsTools` is `false` in v0.1 even for models that natively support tool calling — v0.4 will flip this alongside wire-level tool implementation.
+
+## Gotchas
+
+- **`prompt_eval_count` / `eval_count` can be `undefined`** on cached prompts. The adapter coalesces them to `0` so `usage.inputTokens` / `outputTokens` stay numeric.
+- **Model not found returns HTTP 404**, mapped to `ProviderUnavailableError`. The router falls cleanly on this — the adapter doesn't try to auto-pull.
+- **`requires.tools === true` is rejected pre-HTTP** with `CapabilityMismatchError`. Ollama supports tool calling for some models, but TierFall's integration lands in v0.4.
+- **Streaming is not yet implemented.** The wire request uses `stream: false`. Streaming is v0.4 roadmap.
+- **Timeout is fixed at 30 seconds** via `AbortController`. No per-request override in v0.1.
+- **No `ollama` SDK dependency.** The adapter uses Node 24's built-in `fetch` against `POST /api/chat`.
+
+## Use with Router
+
+```ts
+import { Router, DefaultPolicy } from '@tierfall/core';
+import { OllamaAdapter } from '@tierfall/adapter-ollama';
+
+const router = new Router(
+  new DefaultPolicy().evaluate({ model: 'auto', messages: [] }, [
+    new OllamaAdapter({ model: 'llama3.2:3b' }),
+  ]),
+);
+
+const response = await router.complete({
+  model: 'auto',
+  messages: [{ role: 'user', content: 'Hello!' }],
+});
+```
+
+## Read next
+
+- [Adapter interface](/docs/reference/adapter) — the contract
+- [The four tiers](/docs/concepts/tiers) — what `on-device` means
+- [@tierfall/adapter-openai-compatible](/docs/reference/adapter-openai-compatible) — pair Ollama with cloud tiers

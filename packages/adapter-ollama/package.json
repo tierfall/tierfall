@@ -1,0 +1,53 @@
+{
+  "name": "@tierfall/adapter-ollama",
+  "version": "0.1.0",
+  "description": "TierFall on-device adapter for Ollama",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tierfall/tierfall.git",
+    "directory": "packages/adapter-ollama"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --testPathIgnorePatterns=integration",
+    "lint": "eslint --max-warnings=0 --quiet src test",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test:integration": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --testPathPattern=integration"
+  },
+  "dependencies": {
+    "@tierfall/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@jest/globals": "29.7.0",
+    "jest": "29.7.0",
+    "ts-jest": "29.4.10",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
