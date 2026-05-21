@@ -28,3 +28,6 @@ apps/docs/.source/
 
 # gitnexus local index database
 .gitnexus/
+
+# Next.js static export (built locally; CI produces it for GH Pages deploy)
+apps/docs/out/

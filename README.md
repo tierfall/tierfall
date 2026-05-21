@@ -18,7 +18,7 @@ TierFall is designed to sit **underneath** frameworks like the Vercel AI SDK, no
 **v0.1 is released** — all four published packages (`@tierfall/core`, `@tierfall/adapter-ollama`,
 `@tierfall/adapter-openai-compatible`, `@tierfall/adapter-anthropic`) ship as v0.1.0 with
 working router, declarative policy, three adapters, five blessed OpenAI-compat presets, and
-a containerized demo. See the [docs](https://docs.tierfall.dev) for concepts and reference.
+a containerized demo. See the [docs](https://tierfall.github.io/tierfall) for concepts and reference.
 
 ## Example
 
